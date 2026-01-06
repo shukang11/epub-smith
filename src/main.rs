@@ -169,14 +169,20 @@ fn main() -> Result<()> {
     info!("Starting BookSmith v{}", env!("CARGO_PKG_VERSION"));
     info!("Input: {}", args.input.as_ref().unwrap().display());
 
+    // 开始总计时
+    let total_start = std::time::Instant::now();
+
     let config = Config::from_args(&args)?;
 
     let spinner = ProgressBar::new_spinner();
     spinner.set_message(t!("processing-parsing-text"));
     spinner.enable_steady_tick(Duration::from_millis(120));
     
+    // 开始解析计时
+    let parse_start = std::time::Instant::now();
     let mut book = parse_txt(args.input.as_ref().unwrap(), &config)
         .with_context(|| format!("Failed to parse input file: {}", args.input.as_ref().unwrap().display()))?;
+    let parse_duration = parse_start.elapsed();
     
     spinner.finish_with_message(t!("success-text-parsed"));
 
@@ -190,6 +196,14 @@ fn main() -> Result<()> {
             println!("[{:03}] {} (lines {}-{})
 ", i + 1, chapter.title, chapter.start_line + 1, chapter.end_line + 1);
         }
+        
+        // 打印计时信息
+        if args.debug {
+            println!("\n{}", style("=== Performance Summary ===").bold());
+            println!("Text parsing: {:.2?}", parse_duration);
+            println!("Total time: {:.2?}", total_start.elapsed());
+        }
+        
         return Ok(());
     }
 
@@ -198,6 +212,14 @@ fn main() -> Result<()> {
         for (i, chapter) in book.chapters.iter().enumerate() {
             println!("{}. {}", i + 1, chapter.title);
         }
+        
+        // 打印计时信息
+        if args.debug {
+            println!("\n{}", style("=== Performance Summary ===").bold());
+            println!("Text parsing: {:.2?}", parse_duration);
+            println!("Total time: {:.2?}", total_start.elapsed());
+        }
+        
         return Ok(());
     }
 
@@ -205,8 +227,11 @@ fn main() -> Result<()> {
     spinner.set_message(t!("processing-rendering-xhtml"));
     spinner.enable_steady_tick(Duration::from_millis(120));
     
+    // 开始渲染计时
+    let render_start = std::time::Instant::now();
     let xhtml_files = render_book(&book, &config)
         .with_context(|| "Failed to render XHTML files")?;
+    let render_duration = render_start.elapsed();
     
     spinner.finish_with_message(t!("success-xhtml-rendered"));
 
@@ -214,14 +239,26 @@ fn main() -> Result<()> {
     spinner.set_message(t!("processing-packaging-epub"));
     spinner.enable_steady_tick(Duration::from_millis(120));
     
+    // 开始打包计时
+    let package_start = std::time::Instant::now();
     package_epub(&book, &xhtml_files, &config)
         .with_context(|| format!("Failed to package EPUB to: {}", config.output.display()))?;
+    let package_duration = package_start.elapsed();
     
     spinner.finish_with_message(t!("success-epub-packaged"));
 
     println!("{}", style(t!("success-epub-generated")).green().bold());
     println!("{} {}", t!("label-output"), style(config.output.display()).blue());
     println!("{}", style(t!("info-total-chapters-processed", count = book.chapters.len())).cyan());
+
+    // 打印计时信息
+    if args.debug {
+        println!("\n{}", style("=== Performance Summary ===").bold());
+        println!("Text parsing: {:.2?}", parse_duration);
+        println!("XHTML rendering: {:.2?}", render_duration);
+        println!("EPUB packaging: {:.2?}", package_duration);
+        println!("Total time: {:.2?}", total_start.elapsed());
+    }
 
     Ok(())
 }

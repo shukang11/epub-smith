@@ -68,6 +68,10 @@ pub struct Args {
     #[arg(short = 'v', long = "verbose", group = "debug_options")]
     pub verbose: bool,
 
+    /// 启用性能分析，显示各阶段耗时
+    #[arg(long = "debug", group = "debug_options")]
+    pub debug: bool,
+
     /// 指定输出语言（例如：en, zh）
     #[arg(long = "lang", value_name = "LANGUAGE")]
     pub lang: Option<String>,

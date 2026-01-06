@@ -36,6 +36,7 @@ tempfile = "3.0"
 uuid = { version = "1.4", features = ["v4"] }
 chrono = "0.4"
 rust-i18n = "3"
+lazy_static = "1.4"
 
 # Windows 系统语言检测
 [target.'cfg(windows)'.dependencies]

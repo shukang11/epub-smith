@@ -1,4 +1,6 @@
 use anyhow::{Context, Result};
+use clap::Parser;
+use lazy_static::lazy_static;
 use regex::Regex;
 use slug::slugify;
 
@@ -13,10 +15,12 @@ use crate::models::{Chapter, Rules};
 /// 从行列表中解析章节
 pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Vec<Chapter>> {
     // 编译所有章节正则表达式
+    let regex_start = std::time::Instant::now();
     let regex_patterns: Vec<Regex> = rules.chapter.regex.iter()
         .map(|pattern| Regex::new(pattern)
             .with_context(|| format!("Invalid regex pattern: {}", pattern)))
         .collect::<Result<_>>()?;
+    let regex_duration = regex_start.elapsed();
 
     // 查找所有章节起始位置
     let mut chapter_starts: Vec<(usize, &str)> = Vec::new();
@@ -31,6 +35,7 @@ pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Ve
         println!("{}", t!("explain-detecting-chapters"));
     }
     
+    let detect_start = std::time::Instant::now();
     for (line_num, line) in lines.iter().enumerate() {
         // 检查该行是否匹配任何章节模式
         for (i, regex) in regex_patterns.iter().enumerate() {
@@ -43,6 +48,7 @@ pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Ve
             }
         }
     }
+    let detect_duration = detect_start.elapsed();
 
     // 如果没有找到章节，将整个文件视为一个章节
     if chapter_starts.is_empty() {
@@ -56,6 +62,7 @@ pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Ve
     }
 
     // 从起始位置创建章节
+    let create_start = std::time::Instant::now();
     let mut chapters = Vec::new();
     
     for (i, (start_line, title)) in chapter_starts.iter().enumerate() {
@@ -67,6 +74,22 @@ pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Ve
         
         let chapter = create_chapter(lines, *start_line, end_line, title, rules)?;
         chapters.push(chapter);
+    }
+    let create_duration = create_start.elapsed();
+
+    // 打印详细计时信息
+    if let Ok(args) = crate::cli::Args::try_parse_from(std::env::args_os()) {
+        if args.debug {
+            eprintln!("  ┌─────────────────────────────────────────────────────────────────────────────");
+            eprintln!("  │ Chapter Parsing Details");
+            eprintln!("  ├───────────────────────────────────┬───────────────────────────────────────");
+            eprintln!("  │ Step                              │ Duration                              ");
+            eprintln!("  ├───────────────────────────────────┼───────────────────────────────────────");
+            eprintln!("  │ Regex compilation                 │ {:<37.2?}", regex_duration);
+            eprintln!("  │ Chapter detection                 │ {:<37.2?}", detect_duration);
+            eprintln!("  │ Chapter creation                  │ {:<37.2?}", create_duration);
+            eprintln!("  └───────────────────────────────────┴───────────────────────────────────────");
+        }
     }
 
     Ok(chapters)
@@ -88,10 +111,30 @@ fn create_chapter(
     };
     
     // 根据规则处理段落
+    let process_start = std::time::Instant::now();
     let paragraphs = process_paragraphs(content_lines, &rules.paragraph);
+    let process_duration = process_start.elapsed();
     
     // 生成章节slug
+    let slug_start = std::time::Instant::now();
     let slug = slugify(raw_title);
+    let slug_duration = slug_start.elapsed();
+    
+    // 收集所有create_chapter的计时信息，用于后续汇总
+    if let Ok(args) = crate::cli::Args::try_parse_from(std::env::args_os()) {
+        if args.debug {
+            // 使用thread_local存储计时信息
+            thread_local! {
+                static CREATE_CHAPTER_TIMES: std::cell::RefCell<(u128, u128)> = std::cell::RefCell::new((0, 0));
+            }
+            
+            CREATE_CHAPTER_TIMES.with(|times| {
+                let mut times = times.borrow_mut();
+                times.0 += process_duration.as_nanos();
+                times.1 += slug_duration.as_nanos();
+            });
+        }
+    }
     
     Ok(Chapter {
         title: raw_title.trim().to_string(),
@@ -100,6 +143,28 @@ fn create_chapter(
         start_line,
         end_line,
     })
+}
+
+// 编译一次正则表达式，避免重复编译
+lazy_static! {
+    // 1. 修复 <ahref...> 这种标签名和属性之间缺少空格的情况
+    static ref RE_TAG_SPACE: Regex = Regex::new(r#"<([a-zA-Z][a-zA-Z0-9]*)(href|src|target|alt|width|height|title|class|id|bl_id|a_id|b_id)"#).unwrap();
+    // 2. 修复 hrefhttp:// 这种缺少等号和引号的情况
+    static ref RE_HREF: Regex = Regex::new(r#"href(http[s]?://[^">]+)"#).unwrap();
+    // 3. 修复 srchttp:// 这种缺少等号和引号的情况
+    static ref RE_SRC: Regex = Regex::new(r#"src(http[s]?://[^">]+)"#).unwrap();
+    // 4. 修复 target_blank 这种缺少等号和引号的情况，保留下划线
+    static ref RE_ATTR_UNDERSCORE: Regex = Regex::new(r#"(target|alt|title|class|id|bl_id|a_id|b_id|width|height)_([^\s">]+)"#).unwrap();
+    // 5. 修复 bl_id1234 这种缺少等号和引号的情况
+    static ref RE_ATTR_NUM: Regex = Regex::new(r#"(bl_id|a_id|b_id|width|height)(\d+)"#).unwrap();
+    // 6. 修复属性之间缺少空格的问题（如 target="_blank"href="..."）
+    static ref RE_ATTR_NO_SPACE: Regex = Regex::new(r#""([a-zA-Z][a-zA-Z0-9_]*)="#).unwrap();
+    // 7. 清理属性值前面的多余空格（如 href=" http://）
+    static ref RE_ATTR_LEADING_SPACE: Regex = Regex::new(r#"="\s+"#).unwrap();
+    // 8. 清理多余的空格
+    static ref RE_EXTRA_SPACE: Regex = Regex::new(r#"\s+">"#).unwrap();
+    // 9. 修复引号之间的多余空格
+    static ref RE_QUOTE_SPACE: Regex = Regex::new(r#""\s+""#).unwrap();
 }
 
 /// 根据规则处理段落
@@ -131,7 +196,7 @@ fn process_paragraphs(lines: &[&str], rules: &crate::models::ParagraphRules) -> 
             }
             
             // 先转义HTML特殊字符（只转义文本内容，不影响HTML标签）
-            let mut escaped_line = String::new();
+            let mut escaped_line = String::with_capacity(processed_line.len() * 2); // 预分配空间减少扩容
             let mut in_tag = false;
             let mut chars = processed_line.chars().peekable();
             
@@ -186,40 +251,31 @@ fn process_paragraphs(lines: &[&str], rules: &crate::models::ParagraphRules) -> 
             let mut fixed_line = escaped_line.clone();
             
             // 1. 修复 <ahref...> 这种标签名和属性之间缺少空格的情况
-            let re_tag_space = Regex::new(r#"<([a-zA-Z][a-zA-Z0-9]*)(href|src|target|alt|width|height|title|class|id|bl_id|a_id|b_id)"#).unwrap();
-            fixed_line = re_tag_space.replace_all(&fixed_line, r#"<$1 $2"#).to_string();
+            fixed_line = RE_TAG_SPACE.replace_all(&fixed_line, r#"<$1 $2"#).to_string();
             
             // 2. 修复 hrefhttp:// 这种缺少等号和引号的情况
-            let re_href = Regex::new(r#"href(http[s]?://[^">]+)"#).unwrap();
-            fixed_line = re_href.replace_all(&fixed_line, r#"href="$1""#).to_string();
+            fixed_line = RE_HREF.replace_all(&fixed_line, r#"href="$1""#).to_string();
             
             // 3. 修复 srchttp:// 这种缺少等号和引号的情况
-            let re_src = Regex::new(r#"src(http[s]?://[^">]+)"#).unwrap();
-            fixed_line = re_src.replace_all(&fixed_line, r#"src="$1""#).to_string();
+            fixed_line = RE_SRC.replace_all(&fixed_line, r#"src="$1""#).to_string();
             
             // 4. 修复 target_blank 这种缺少等号和引号的情况，保留下划线
-            let re_attr_underscore = Regex::new(r#"(target|alt|title|class|id|bl_id|a_id|b_id|width|height)_([^\s">]+)"#).unwrap();
-            fixed_line = re_attr_underscore.replace_all(&fixed_line, r#"$1="$2""#).to_string();
+            fixed_line = RE_ATTR_UNDERSCORE.replace_all(&fixed_line, r#"$1="$2""#).to_string();
             
             // 5. 修复 bl_id1234 这种缺少等号和引号的情况
-            let re_attr_num = Regex::new(r#"(bl_id|a_id|b_id|width|height)(\d+)"#).unwrap();
-            fixed_line = re_attr_num.replace_all(&fixed_line, r#"$1="$2""#).to_string();
+            fixed_line = RE_ATTR_NUM.replace_all(&fixed_line, r#"$1="$2""#).to_string();
             
             // 11. 修复属性之间缺少空格的问题（如 target="_blank"href="..."）
-            let re_attr_no_space = Regex::new(r#""([a-zA-Z][a-zA-Z0-9_]*)="#).unwrap();
-            fixed_line = re_attr_no_space.replace_all(&fixed_line, r#"" $1="#).to_string();
+            fixed_line = RE_ATTR_NO_SPACE.replace_all(&fixed_line, r#"" $1="#).to_string();
             
             // 12. 清理属性值前面的多余空格（如 href=" http://）
-            let re_attr_leading_space = Regex::new(r#"="\s+"#).unwrap();
-            fixed_line = re_attr_leading_space.replace_all(&fixed_line, r#"="#).to_string();
+            fixed_line = RE_ATTR_LEADING_SPACE.replace_all(&fixed_line, r#"="#).to_string();
             
             // 13. 清理多余的空格
-            let re_extra_space = Regex::new(r#"\s+>"#).unwrap();
-            fixed_line = re_extra_space.replace_all(&fixed_line, r#">"#).to_string();
+            fixed_line = RE_EXTRA_SPACE.replace_all(&fixed_line, r#">"#).to_string();
             
             // 14. 修复引号之间的多余空格
-            let re_quote_space = Regex::new(r#""\s+""#).unwrap();
-            fixed_line = re_quote_space.replace_all(&fixed_line, r#"""#).to_string();
+            fixed_line = RE_QUOTE_SPACE.replace_all(&fixed_line, r#"""#).to_string();
             
             current_paragraph.push_str(&fixed_line);
         }
