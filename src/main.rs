@@ -86,14 +86,97 @@ fn main() -> Result<()> {
         // 从命令行参数获取语言
         rust_i18n::set_locale(lang);
     } else {
-        // 尝试从环境变量获取语言
-        if let Some(env_lang) = std::env::var("LANG").ok() {
-            // 提取语言代码（例如：en_US.UTF-8 -> en）
-            let lang_code = env_lang.split('.').next().unwrap_or_default();
-            let lang_code = lang_code.split('_').next().unwrap_or_default();
-            rust_i18n::set_locale(lang_code);
+        // 支持的语言列表
+        let supported_locales = ["en", "zh", "zh-CN", "zh-TW", "ja", "ko", "fr", "de", "es", "it"];
+
+        // 1. macOS 系统语言检测
+        #[cfg(target_os = "macos")]
+        {
+            use std::process::Command;
+            // 读取 macOS 系统语言设置
+            if let Ok(output) = Command::new("defaults")
+                .args(&["read", "-g", "AppleLanguages"])
+                .output()
+            {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    // AppleLanguages 输出格式类似: ( "en-CN", "zh-CN" )
+                    if let Some(lang_code) = stdout
+                        .split(|c| c == '"' || c == '(' || c == ')' || c == ',')
+                        .filter(|s| !s.trim().is_empty())
+                        .next()
+                    {
+                        let lang_code = lang_code.split('-').next().unwrap_or(lang_code);
+                        let lang_code = lang_code.split('_').next().unwrap_or(lang_code);
+
+                        if supported_locales.contains(&lang_code) {
+                            rust_i18n::set_locale(lang_code);
+                        } else if lang_code.starts_with("zh") {
+                            rust_i18n::set_locale("zh-CN");
+                        } else if lang_code.starts_with("ja") {
+                            rust_i18n::set_locale("ja");
+                        } else if lang_code.starts_with("ko") {
+                            rust_i18n::set_locale("ko");
+                        }
+                    }
+                }
+            }
         }
-        // 否则使用默认语言（英语）
+
+        // 2. Windows 系统语言检测
+        #[cfg(target_os = "windows")]
+        {
+            use winreg::enums::*;
+            use winreg::RegKey;
+
+            if let Ok(hkcu) = RegKey::predef(HKEY_CURRENT_USER) {
+                if let Ok(international) = hkcu.open_subkey("Control Panel\\International") {
+                    if let Ok(locale_name) = international.get_value::<String, _>("Locale") {
+                        // Windows locale name 示例: "zh-CN", "en-US"
+                        let lang_code = if locale_name.len() >= 5 {
+                            &locale_name[..5]
+                        } else {
+                            &locale_name
+                        };
+
+                        if supported_locales.contains(&lang_code) {
+                            rust_i18n::set_locale(lang_code);
+                        } else if lang_code.starts_with("zh") {
+                            rust_i18n::set_locale("zh-CN");
+                        } else if lang_code.starts_with("ja") {
+                            rust_i18n::set_locale("ja");
+                        } else if lang_code.starts_with("ko") {
+                            rust_i18n::set_locale("ko");
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Linux 系统语言检测
+        #[cfg(target_os = "linux")]
+        {
+            if let Ok(content) = std::fs::read_to_string("/etc/default/locale") {
+                for line in content.lines() {
+                    if line.starts_with("LANG=") {
+                        let lang_value = line.trim_start_matches("LANG=").trim_matches('"');
+                        let lang_code = lang_value.split('.').next().unwrap_or(lang_value);
+                        let lang_code = lang_code.split('_').next().unwrap_or(lang_code);
+
+                        if supported_locales.contains(&lang_code) {
+                            rust_i18n::set_locale(lang_code);
+                        } else if lang_code.starts_with("zh") {
+                            rust_i18n::set_locale("zh-CN");
+                        } else if lang_code.starts_with("ja") {
+                            rust_i18n::set_locale("ja");
+                        } else if lang_code.starts_with("ko") {
+                            rust_i18n::set_locale("ko");
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     info!("Starting BookSmith v{}", env!("CARGO_PKG_VERSION"));

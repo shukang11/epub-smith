@@ -62,6 +62,8 @@ This is another section with written number."#;
     
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--dry-run")
+       .arg("--lang")
+       .arg("en")
        .arg(temp_file.path());
     
     cmd.assert()
@@ -91,6 +93,8 @@ This is another section."#;
     
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--dry-run")
+       .arg("--lang")
+       .arg("en")
        .arg(temp_file.path());
     
     cmd.assert()
@@ -136,6 +140,8 @@ This is bonus content."#;
     std::fs::write(content_file.path(), content).unwrap();
  let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--dry-run")
+       .arg("--lang")
+       .arg("en")
        .arg("--rules")
        .arg(rules_file.path())
        .arg(content_file.path());
@@ -198,6 +204,8 @@ fn test_advanced_chapters() {
     
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--dry-run")
+       .arg("--lang")
+       .arg("en")
        .arg(temp_file.path());
     
     cmd.assert()
@@ -213,6 +221,8 @@ fn test_empty_file() {
     
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--dry-run")
+       .arg("--lang")
+       .arg("en")
        .arg(temp_file.path());
     
     cmd.assert()
@@ -230,6 +240,8 @@ It should be treated as a single chapter."#;
     
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--dry-run")
+       .arg("--lang")
+       .arg("en")
        .arg(temp_file.path());
     
     cmd.assert()
@@ -306,6 +318,8 @@ fn test_print_outline() {
     
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--print-outline")
+       .arg("--lang")
+       .arg("en")
        .arg(temp_file.path());
     
     cmd.assert()
@@ -327,6 +341,8 @@ fn test_verbose_mode() {
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("-v")
        .arg("--dry-run")
+       .arg("--lang")
+       .arg("en")
        .arg(temp_file.path());
     
     cmd.assert()

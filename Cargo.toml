@@ -37,6 +37,10 @@ uuid = { version = "1.4", features = ["v4"] }
 chrono = "0.4"
 rust-i18n = "3"
 
+# Windows 系统语言检测
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.0"
