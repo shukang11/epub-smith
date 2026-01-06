@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>{{ book.meta.title }} - Table of Contents</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+    <nav epub:type="toc" id="toc">
+        <h1>Table of Contents</h1>
+        <ol>
+            {% for chapter in book.chapters %}
+            <li>
+                <a href="chapter_{{ loop.index }}.xhtml">{{ chapter.title }}</a>
+            </li>
+            {% endfor %}
+        </ol>
+    </nav>
+</body>
+</html>

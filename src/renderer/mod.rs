@@ -1,0 +1,148 @@
+use std::path::PathBuf;
+use anyhow::{Context, Result};
+use tera::{Tera, Context as TeraContext};
+use tempfile::tempdir;
+
+use crate::{models::{Book, Chapter}, config::Config};
+
+/// 将书籍渲染为XHTML文件
+pub fn render_book(book: &Book, _config: &Config) -> Result<Vec<PathBuf>> {
+    // 初始化Tera模板引擎
+    let tera = initialize_tera()?;
+    
+    // 创建临时目录用于存储XHTML文件
+    let temp_dir = tempdir()
+        .with_context(|| "Failed to create temporary directory")?;
+    
+    // 获取临时目录路径并阻止自动删除
+    let temp_path = temp_dir.path().to_path_buf();
+    let _ = temp_dir.keep();
+    
+    let mut xhtml_files = Vec::new();
+    
+    // 渲染每个章节
+    for (i, chapter) in book.chapters.iter().enumerate() {
+        let xhtml_path = temp_path.join(format!("chapter_{:03}.xhtml", i + 1));
+        render_chapter(chapter, i + 1, book, &tera, &xhtml_path)?;
+        xhtml_files.push(xhtml_path);
+    }
+    
+    // 渲染导航文件
+    let nav_path = temp_path.join("nav.xhtml");
+    render_nav(book, &tera, &nav_path)?;
+    xhtml_files.push(nav_path);
+    
+    // 渲染CSS文件
+    let css_path = temp_path.join("style.css");
+    render_css(&css_path)?;
+    xhtml_files.push(css_path);
+    
+    // 渲染OPF文件
+    let opf_path = temp_path.join("content.opf");
+    render_opf(book, &xhtml_files, &tera, &opf_path)?;
+    xhtml_files.push(opf_path);
+    
+    // 渲染mimetype文件
+    let mimetype_path = temp_path.join("mimetype");
+    render_mimetype(&mimetype_path)?;
+    xhtml_files.push(mimetype_path);
+    
+    // 渲染container.xml文件
+    let container_path = temp_path.join("META-INF/container.xml");
+    std::fs::create_dir_all(temp_path.join("META-INF"))?;
+    render_container(&container_path)?;
+    xhtml_files.push(container_path);
+    
+    Ok(xhtml_files)
+}
+
+/// 初始化Tera模板引擎
+fn initialize_tera() -> Result<Tera> {
+    // 创建Tera实例，添加所有模板
+    let mut tera = Tera::default();
+    
+    // 添加章节模板
+    tera.add_raw_template("chapter.xhtml", include_str!("../templates/chapter.xhtml.tera"))?;
+    
+    // 添加导航模板
+    tera.add_raw_template("nav.xhtml", include_str!("../templates/nav.xhtml.tera"))?;
+    
+    // 添加OPF模板
+    tera.add_raw_template("content.opf", include_str!("../templates/content.opf.tera"))?;
+    
+    Ok(tera)
+}
+
+/// 渲染单个章节为XHTML文件
+fn render_chapter(chapter: &Chapter, chapter_num: usize, book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()> {
+    let mut context = TeraContext::new();
+    context.insert("chapter", chapter);
+    context.insert("chapter_num", &chapter_num);
+    context.insert("book", book);
+    
+    let rendered = tera.render("chapter.xhtml", &context)?;
+    std::fs::write(output_path, rendered)?;
+    
+    Ok(())
+}
+
+/// 渲染导航文件
+fn render_nav(book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()> {
+    let mut context = TeraContext::new();
+    context.insert("book", book);
+    
+    let rendered = tera.render("nav.xhtml", &context)?;
+    std::fs::write(output_path, rendered)?;
+    
+    Ok(())
+}
+
+/// 渲染OPF文件
+fn render_opf(book: &Book, xhtml_files: &[PathBuf], tera: &Tera, output_path: &PathBuf) -> Result<()> {
+    let mut context = TeraContext::new();
+    context.insert("book", book);
+    
+    // 收集所有XHTML文件的文件名
+    let xhtml_filenames: Vec<String> = xhtml_files
+        .iter()
+        .filter(|path| path.extension().map(|ext| ext == "xhtml").unwrap_or(false))
+        .map(|path| path.file_name().unwrap().to_string_lossy().to_string())
+        .collect();
+    
+    context.insert("xhtml_files", &xhtml_filenames);
+    
+    let rendered = tera.render("content.opf", &context)?;
+    std::fs::write(output_path, rendered)?;
+    
+    Ok(())
+}
+
+/// 渲染CSS文件
+fn render_css(output_path: &PathBuf) -> Result<()> {
+    // 使用默认CSS内容
+    let css_content = include_str!("../resources/css/default.css");
+    std::fs::write(output_path, css_content)?;
+    
+    Ok(())
+}
+
+/// 渲染mimetype文件
+fn render_mimetype(output_path: &PathBuf) -> Result<()> {
+    std::fs::write(output_path, "application/epub+zip")?;
+    
+    Ok(())
+}
+
+/// 渲染container.xml文件
+fn render_container(output_path: &PathBuf) -> Result<()> {
+    let container_content = r#"<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>"#;
+    
+    std::fs::write(output_path, container_content)?;
+    
+    Ok(())
+}

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="pub-id">
+    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+        <dc:title>{{ book.meta.title }}</dc:title>
+        <dc:creator>{{ book.meta.author }}</dc:creator>
+        <dc:language>{{ book.meta.language }}</dc:language>
+        <dc:identifier id="pub-id">{{ book.meta.identifier }}</dc:identifier>
+        <dc:modified>{{ book.meta.modified }}</dc:modified>
+        {% if book.meta.cover %}
+        <meta name="cover" content="cover-image" />
+        {% endif %}
+    </metadata>
+    <manifest>
+        {% for file in xhtml_files %}
+        <item href="{{ file }}" id="item-{{ loop.index }}" media-type="application/xhtml+xml" />
+        {% endfor %}
+        <item href="style.css" id="css" media-type="text/css" />
+        <item href="nav.xhtml" id="nav" media-type="application/xhtml+xml" properties="nav" />
+        {% if book.meta.cover %}
+        <item href="{{ book.meta.cover }}" id="cover-image" media-type="image/jpeg" properties="cover-image" />
+        {% endif %}
+    </manifest>
+    <spine>
+        {% for file in xhtml_files %}
+        {% if file != "nav.xhtml" %}
+        <itemref idref="item-{{ loop.index }}" />
+        {% endif %}
+        {% endfor %}
+    </spine>
+    <guide>
+        <reference type="toc" title="Table of Contents" href="nav.xhtml" />
+    </guide>
+</package>

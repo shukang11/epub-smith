@@ -1,0 +1,78 @@
+/* Default CSS for BookSmith generated EPUB */
+
+@charset "UTF-8";
+
+/* Base styles */
+body {
+    font-family: "SimSun", "Songti SC", "STSong", "AR PL SungtiL GB", "Noto Serif CJK SC", serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #000000;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+}
+
+/* Container */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Chapter title */
+h1.chapter-title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin: 40px 0 30px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #cccccc;
+}
+
+/* Chapter content */
+p.chapter-content {
+    text-indent: 2em;
+    margin: 10px 0;
+    text-align: justify;
+}
+
+/* Table of contents */
+nav#toc {
+    padding: 20px;
+}
+
+nav#toc h1 {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+nav#toc ol {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+nav#toc li {
+    margin-bottom: 10px;
+}
+
+nav#toc a {
+    color: #000000;
+    text-decoration: none;
+    display: block;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+nav#toc a:hover {
+    background-color: #f0f0f0;
+}
+
+/* Page breaks for print */
+@media print {
+    h1.chapter-title {
+        page-break-before: always;
+    }
+}

@@ -1,0 +1,136 @@
+use anyhow::{Context, Result};
+use regex::Regex;
+use slug::slugify;
+
+use crate::models::{Chapter, Rules};
+
+/// 从行列表中解析章节
+pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Vec<Chapter>> {
+    // 编译所有章节正则表达式
+    let regex_patterns: Vec<Regex> = rules.chapter.regex.iter()
+        .map(|pattern| Regex::new(pattern)
+            .with_context(|| format!("Invalid regex pattern: {}", pattern)))
+        .collect::<Result<_>>()?;
+
+    // 查找所有章节起始位置
+    let mut chapter_starts: Vec<(usize, &str)> = Vec::new();
+    
+    if explain {
+        println!("使用的章节正则表达式：");
+        for (i, pattern) in rules.chapter.regex.iter().enumerate() {
+            println!("  {}. {}", i + 1, pattern);
+        }
+        println!();
+        
+        println!("检测章节起始位置：");
+    }
+    
+    for (line_num, line) in lines.iter().enumerate() {
+        // 检查该行是否匹配任何章节模式
+        for (i, regex) in regex_patterns.iter().enumerate() {
+            if regex.is_match(line) {
+                if explain {
+                    println!("  行 {}: 匹配正则 {} -> {}", line_num + 1, i + 1, line.trim());
+                }
+                chapter_starts.push((line_num, line));
+                break;
+            }
+        }
+    }
+
+    // 如果没有找到章节，将整个文件视为一个章节
+    if chapter_starts.is_empty() {
+        let end_line = if lines.is_empty() {
+            0
+        } else {
+            lines.len() - 1
+        };
+        let chapter = create_chapter(lines, 0, end_line, "Chapter 1", rules)?;
+        return Ok(vec![chapter]);
+    }
+
+    // 从起始位置创建章节
+    let mut chapters = Vec::new();
+    
+    for (i, (start_line, title)) in chapter_starts.iter().enumerate() {
+        let end_line = if i < chapter_starts.len() - 1 {
+            chapter_starts[i + 1].0 - 1
+        } else {
+            lines.len() - 1
+        };
+        
+        let chapter = create_chapter(lines, *start_line, end_line, title, rules)?;
+        chapters.push(chapter);
+    }
+
+    Ok(chapters)
+}
+
+/// 从行范围创建章节
+fn create_chapter(
+    lines: &[&str], 
+    start_line: usize, 
+    end_line: usize, 
+    raw_title: &str, 
+    rules: &Rules
+) -> Result<Chapter> {
+    // 提取章节内容行，处理空切片的情况
+    let content_lines = if lines.is_empty() {
+        &[]
+    } else {
+        &lines[start_line..=end_line]
+    };
+    
+    // 根据规则处理段落
+    let paragraphs = process_paragraphs(content_lines, &rules.paragraph);
+    
+    // 生成章节slug
+    let slug = slugify(raw_title);
+    
+    Ok(Chapter {
+        title: raw_title.trim().to_string(),
+        paragraphs,
+        slug,
+        start_line,
+        end_line,
+    })
+}
+
+/// 根据规则处理段落
+fn process_paragraphs(lines: &[&str], rules: &crate::models::ParagraphRules) -> Vec<String> {
+    let mut paragraphs = Vec::new();
+    let mut current_paragraph = String::new();
+    
+    for line in lines {
+        let processed_line = if rules.trim_whitespace {
+            line.trim()
+        } else {
+            line
+        };
+        
+        if processed_line.is_empty() {
+            // 如果行是空的，且当前段落非空，将其添加到段落列表
+            if !current_paragraph.is_empty() {
+                paragraphs.push(current_paragraph.trim().to_string());
+                current_paragraph.clear();
+            }
+        } else {
+            // 如果行非空，将其添加到当前段落
+            if !current_paragraph.is_empty() {
+                if rules.merge_lines {
+                    current_paragraph.push(' ');
+                } else {
+                    current_paragraph.push('\n');
+                }
+            }
+            current_paragraph.push_str(processed_line);
+        }
+    }
+    
+    // 添加最后一个段落（如果非空）
+    if !current_paragraph.is_empty() {
+        paragraphs.push(current_paragraph.trim().to_string());
+    }
+    
+    paragraphs
+}
