@@ -1,7 +1,9 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use console::style;
+use indicatif::ProgressBar;
 use log::info;
+use std::time::Duration;
 
 use booksmith::{cli::Args, config::Config, parser::parse_txt, renderer::render_book, packager::package_epub, extract_chapter_number};
 
@@ -79,8 +81,14 @@ fn main() -> Result<()> {
     let config = Config::from_args(&args)?;
 
     // 解析TXT文件
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_message("Parsing text file...");
+    spinner.enable_steady_tick(Duration::from_millis(120));
+    
     let mut book = parse_txt(&args.input, &config)
         .with_context(|| format!("Failed to parse input file: {}", args.input.display()))?;
+    
+    spinner.finish_with_message("Text file parsed successfully");
 
     // 合并元数据
     book.meta = config.merge_meta(&args, book.meta.title.as_str());
@@ -108,15 +116,28 @@ fn main() -> Result<()> {
     }
 
     // 渲染XHTML
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_message("Rendering XHTML files...");
+    spinner.enable_steady_tick(Duration::from_millis(120));
+    
     let xhtml_files = render_book(&book, &config)
         .with_context(|| "Failed to render XHTML files")?;
+    
+    spinner.finish_with_message("XHTML files rendered successfully");
 
     // 打包EPUB
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_message("Packaging EPUB...");
+    spinner.enable_steady_tick(Duration::from_millis(120));
+    
     package_epub(&book, &xhtml_files, &config)
         .with_context(|| format!("Failed to package EPUB to: {}", config.output.display()))?;
+    
+    spinner.finish_with_message("EPUB packaged successfully");
 
     println!("{}", style("✓ EPUB generated successfully!").green().bold());
     println!("Output: {}", style(config.output.display()).blue());
+    println!("{} Total chapters processed: {}", style("ℹ️").cyan(), book.chapters.len());
 
     Ok(())
 }
