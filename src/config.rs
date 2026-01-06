@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 use anyhow::{Context, Result};
 use toml::from_str;
 
-use crate::{cli::Args, models::{Rules, Meta}};
+use crate::{cli::{Args, DEFAULT_OUTPUT_FILENAME}, models::{Rules, Meta}};
 
 /// 应用配置
 #[derive(Debug, Clone)]
@@ -29,9 +29,26 @@ impl Config {
             Rules::default()
         };
 
+        // 如果输出路径是默认值，且输入是文件，使用输入文件名作为输出文件名（替换扩展名）
+        let output = if args.output == PathBuf::from(DEFAULT_OUTPUT_FILENAME) && args.input.is_file() {
+            // 获取输入文件名，替换扩展名为.epub
+            let input_filename = args.input.file_name()
+                .and_then(|os_str| os_str.to_str())
+                .ok_or_else(|| anyhow::anyhow!("Failed to get filename from input path: {}", args.input.display()))?;
+            
+            let output_filename = if let Some((name, _)) = input_filename.rsplit_once('.') {
+                format!("{}.epub", name)
+            } else {
+                format!("{}.epub", input_filename)
+            };
+            PathBuf::from(output_filename)
+        } else {
+            args.output.clone()
+        };
+
         Ok(Self {
             rules,
-            output: args.output.clone(),
+            output,
             check: args.check,
             explain: args.explain,
             encoding: args.encoding.clone(),

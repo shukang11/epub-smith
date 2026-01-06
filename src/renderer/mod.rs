@@ -57,7 +57,7 @@ pub fn render_book(book: &Book, _config: &Config) -> Result<Vec<PathBuf>> {
 }
 
 /// 初始化Tera模板引擎
-fn initialize_tera() -> Result<Tera> {
+pub fn initialize_tera() -> Result<Tera> {
     // 创建Tera实例，添加所有模板
     let mut tera = Tera::default();
     
@@ -74,7 +74,7 @@ fn initialize_tera() -> Result<Tera> {
 }
 
 /// 渲染单个章节为XHTML文件
-fn render_chapter(chapter: &Chapter, chapter_num: usize, book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()> {
+pub fn render_chapter(chapter: &Chapter, chapter_num: usize, book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()> {
     let mut context = TeraContext::new();
     context.insert("chapter", chapter);
     context.insert("chapter_num", &chapter_num);
@@ -87,7 +87,7 @@ fn render_chapter(chapter: &Chapter, chapter_num: usize, book: &Book, tera: &Ter
 }
 
 /// 渲染导航文件
-fn render_nav(book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()> {
+pub fn render_nav(book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()> {
     let mut context = TeraContext::new();
     context.insert("book", book);
     
@@ -98,16 +98,17 @@ fn render_nav(book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()> {
 }
 
 /// 渲染OPF文件
-fn render_opf(book: &Book, xhtml_files: &[PathBuf], tera: &Tera, output_path: &PathBuf) -> Result<()> {
+pub fn render_opf(book: &Book, xhtml_files: &[PathBuf], tera: &Tera, output_path: &PathBuf) -> Result<()> {
     let mut context = TeraContext::new();
     context.insert("book", book);
     
     // 收集所有XHTML文件的文件名
-    let xhtml_filenames: Vec<String> = xhtml_files
-        .iter()
-        .filter(|path| path.extension().map(|ext| ext == "xhtml").unwrap_or(false))
-        .map(|path| path.file_name().unwrap().to_string_lossy().to_string())
-        .collect();
+        let xhtml_filenames: Vec<String> = xhtml_files
+            .iter()
+            .filter(|path| path.extension().map(|ext| ext == "xhtml").unwrap_or(false))
+            .filter_map(|path| path.file_name().and_then(|os_str| os_str.to_str()))
+            .map(|filename| filename.to_string())
+            .collect();
     
     context.insert("xhtml_files", &xhtml_filenames);
     
@@ -118,7 +119,7 @@ fn render_opf(book: &Book, xhtml_files: &[PathBuf], tera: &Tera, output_path: &P
 }
 
 /// 渲染CSS文件
-fn render_css(output_path: &PathBuf) -> Result<()> {
+pub fn render_css(output_path: &PathBuf) -> Result<()> {
     // 使用默认CSS内容
     let css_content = include_str!("../resources/css/default.css");
     std::fs::write(output_path, css_content)?;
@@ -127,14 +128,14 @@ fn render_css(output_path: &PathBuf) -> Result<()> {
 }
 
 /// 渲染mimetype文件
-fn render_mimetype(output_path: &PathBuf) -> Result<()> {
+pub fn render_mimetype(output_path: &PathBuf) -> Result<()> {
     std::fs::write(output_path, "application/epub+zip")?;
     
     Ok(())
 }
 
 /// 渲染container.xml文件
-fn render_container(output_path: &PathBuf) -> Result<()> {
+pub fn render_container(output_path: &PathBuf) -> Result<()> {
     let container_content = r#"<?xml version="1.0" encoding="UTF-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>

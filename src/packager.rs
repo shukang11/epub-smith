@@ -52,7 +52,7 @@ pub fn package_epub(_book: &Book, xhtml_files: &[PathBuf], config: &Config) -> R
 }
 
 /// 添加mimetype文件到ZIP（必须无压缩）
-fn add_mimetype(zip: &mut ZipWriter<std::fs::File>) -> Result<()> {
+pub fn add_mimetype(zip: &mut ZipWriter<std::fs::File>) -> Result<()> {
     // 创建mimetype文件条目，无压缩
     zip.start_file("mimetype", FileOptions::default().compression_method(CompressionMethod::Stored))?;
     
@@ -63,7 +63,7 @@ fn add_mimetype(zip: &mut ZipWriter<std::fs::File>) -> Result<()> {
 }
 
 /// 添加文件到ZIP
-fn add_file_to_zip(
+pub fn add_file_to_zip(
     zip: &mut ZipWriter<std::fs::File>, 
     file_path: &PathBuf, 
     entry_name: &str
@@ -81,7 +81,7 @@ fn add_file_to_zip(
 }
 
 /// 验证EPUB文件
-fn validate_epub(path: &PathBuf) -> Result<()> {
+pub fn validate_epub(path: &PathBuf) -> Result<()> {
     // 注意：这里应该调用epubcheck工具
     // 由于epubcheck是一个外部工具，我们暂时只进行简单的验证
     // 检查文件是否存在且大小合理

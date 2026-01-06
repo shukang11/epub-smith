@@ -1,6 +1,9 @@
 use clap::Parser;
 use std::path::PathBuf;
 
+/// 默认输出文件名
+pub const DEFAULT_OUTPUT_FILENAME: &str = "book.epub";
+
 /// A predictable, explainable, and reusable TXT to EPUB CLI tool
 #[derive(Parser, Debug)]
 #[command(name = "booksmith")]
@@ -17,7 +20,7 @@ pub struct Args {
     pub rules: Option<PathBuf>,
 
     /// 输出EPUB文件路径
-    #[arg(short = 'o', long = "output", value_name = "OUTPUT", default_value = "book.epub")]
+    #[arg(short = 'o', long = "output", value_name = "OUTPUT", default_value = DEFAULT_OUTPUT_FILENAME)]
     pub output: PathBuf,
 
     /// 强制指定输入文件编码
