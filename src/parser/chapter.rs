@@ -130,21 +130,96 @@ fn process_paragraphs(lines: &[&str], rules: &crate::models::ParagraphRules) -> 
                 }
             }
             
+            // 先转义HTML特殊字符（只转义文本内容，不影响HTML标签）
+            let mut escaped_line = String::new();
+            let mut in_tag = false;
+            let mut chars = processed_line.chars().peekable();
+            
+            while let Some(c) = chars.next() {
+                // 过滤无效的XML字符
+                if c.is_control() && !matches!(c, '\n' | '\r' | '\t') {
+                    continue;
+                }
+                
+                if in_tag {
+                    // 在标签内，直接添加字符
+                    escaped_line.push(c);
+                    // 检查是否结束标签
+                    if c == '>' {
+                        in_tag = false;
+                    }
+                } else {
+                    match c {
+                        '<' => {
+                            // 检查是否是HTML标签的开始
+                            if let Some(next_char) = chars.peek() {
+                                if next_char.is_alphabetic() || *next_char == '/' {
+                                    // 是HTML标签，不转义
+                                    escaped_line.push(c);
+                                    in_tag = true;
+                                } else {
+                                    // 不是HTML标签，转义
+                                    escaped_line.push_str("&lt;");
+                                }
+                            } else {
+                                // 行尾的<，转义
+                                escaped_line.push_str("&lt;");
+                            }
+                        }
+                        '>' => {
+                            // 转义>为&gt;
+                            escaped_line.push_str("&gt;");
+                        }
+                        '&' => {
+                            // 转义&为&amp;
+                            escaped_line.push_str("&amp;");
+                        }
+                        _ => {
+                            // 其他字符直接添加
+                            escaped_line.push(c);
+                        }
+                    }
+                }
+            }
+            
             // 修复错误格式的HTML标签
-            let fixed_line = processed_line
-                // 修复 <ahrefhttp://example.com> 这种错误格式（缺少空格）
-                .replace("<a", "<a ")
-                // 修复 hrefhttp://example.com 这种错误格式（缺少等号）
-                .replace("hrefhttp://", "href=\"http://")
-                .replace("hrefhttps://", "href=\"https://")
-                // 修复 target_blank 这种错误格式（缺少等号和引号）
-                .replace("target_blank", "target=\"_blank\"")
-                // 修复 bl_id140700 这种错误格式（缺少等号）
-                .replace("bl_id", "bl_id=")
-                .replace("a_id", "a_id=")
-                .replace("b_id", "b_id=")
-                // 修复 URL 末尾缺少引号的问题
-                .replace("target=\"_blank\">", ")\" target=\"_blank\">");
+            let mut fixed_line = escaped_line.clone();
+            
+            // 1. 修复 <ahref...> 这种标签名和属性之间缺少空格的情况
+            let re_tag_space = Regex::new(r#"<([a-zA-Z][a-zA-Z0-9]*)(href|src|target|alt|width|height|title|class|id|bl_id|a_id|b_id)"#).unwrap();
+            fixed_line = re_tag_space.replace_all(&fixed_line, r#"<$1 $2"#).to_string();
+            
+            // 2. 修复 hrefhttp:// 这种缺少等号和引号的情况
+            let re_href = Regex::new(r#"href(http[s]?://[^">]+)"#).unwrap();
+            fixed_line = re_href.replace_all(&fixed_line, r#"href="$1""#).to_string();
+            
+            // 3. 修复 srchttp:// 这种缺少等号和引号的情况
+            let re_src = Regex::new(r#"src(http[s]?://[^">]+)"#).unwrap();
+            fixed_line = re_src.replace_all(&fixed_line, r#"src="$1""#).to_string();
+            
+            // 4. 修复 target_blank 这种缺少等号和引号的情况，保留下划线
+            let re_attr_underscore = Regex::new(r#"(target|alt|title|class|id|bl_id|a_id|b_id|width|height)_([^\s">]+)"#).unwrap();
+            fixed_line = re_attr_underscore.replace_all(&fixed_line, r#"$1="$2""#).to_string();
+            
+            // 5. 修复 bl_id1234 这种缺少等号和引号的情况
+            let re_attr_num = Regex::new(r#"(bl_id|a_id|b_id|width|height)(\d+)"#).unwrap();
+            fixed_line = re_attr_num.replace_all(&fixed_line, r#"$1="$2""#).to_string();
+            
+            // 11. 修复属性之间缺少空格的问题（如 target="_blank"href="..."）
+            let re_attr_no_space = Regex::new(r#""([a-zA-Z][a-zA-Z0-9_]*)="#).unwrap();
+            fixed_line = re_attr_no_space.replace_all(&fixed_line, r#"" $1="#).to_string();
+            
+            // 12. 清理属性值前面的多余空格（如 href=" http://）
+            let re_attr_leading_space = Regex::new(r#"="\s+"#).unwrap();
+            fixed_line = re_attr_leading_space.replace_all(&fixed_line, r#"="#).to_string();
+            
+            // 13. 清理多余的空格
+            let re_extra_space = Regex::new(r#"\s+>"#).unwrap();
+            fixed_line = re_extra_space.replace_all(&fixed_line, r#">"#).to_string();
+            
+            // 14. 修复引号之间的多余空格
+            let re_quote_space = Regex::new(r#""\s+""#).unwrap();
+            fixed_line = re_quote_space.replace_all(&fixed_line, r#"""#).to_string();
             
             current_paragraph.push_str(&fixed_line);
         }

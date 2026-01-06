@@ -25,10 +25,14 @@ pub fn parse_txt(input: &PathBuf, config: &Config) -> Result<Book> {
         .and_then(|os_str| os_str.to_str())
         .unwrap_or("Untitled");
 
+    // 直接使用文件名作为书名，更可靠
+    let title = default_title.to_string();
+    let author = "Unknown".to_string();
+
     // 创建默认元数据
     let meta = Meta {
-        title: default_title.to_string(),
-        author: "Unknown".to_string(),
+        title,
+        author,
         language: "zh-CN".to_string(),
         identifier: format!("urn:uuid:{}", uuid::Uuid::new_v4()),
         modified: chrono::Utc::now().to_rfc3339(),

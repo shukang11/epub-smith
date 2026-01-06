@@ -132,6 +132,9 @@ impl Default for ChapterRules {
                 r"^尾声".to_string(),
                 r"^后记".to_string(),
                 r"^附录".to_string(),
+                r"^.+！[一二三四五六七八九十0-9]+、".to_string(),
+                r"^.+![一二三四五六七八九十0-9]+、".to_string(),
+                r"^正文".to_string(),
             ],
         }
     }

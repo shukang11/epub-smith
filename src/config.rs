@@ -77,7 +77,8 @@ impl Config {
         // 使用命令行参数覆盖元数据
         if let Some(title) = &args.title {
             meta.title = title.clone();
-        } else if meta.title.is_empty() {
+        } else if meta.title.is_empty() || meta.title == "Untitled" {
+            // 如果标题为空或为默认的"Untitled"，则使用传入的default_title
             meta.title = default_title.to_string();
         }
 
