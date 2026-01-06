@@ -2,6 +2,12 @@ use anyhow::{Context, Result};
 use regex::Regex;
 use slug::slugify;
 
+// 初始化国际化支持
+rust_i18n::i18n!("locales", fallback = "en");
+
+// 导入t宏用于翻译
+use rust_i18n::t;
+
 use crate::models::{Chapter, Rules};
 
 /// 从行列表中解析章节
@@ -16,13 +22,13 @@ pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Ve
     let mut chapter_starts: Vec<(usize, &str)> = Vec::new();
     
     if explain {
-        println!("使用的章节正则表达式：");
+        println!("{}", t!("explain-using-regex"));
         for (i, pattern) in rules.chapter.regex.iter().enumerate() {
             println!("  {}. {}", i + 1, pattern);
         }
         println!();
         
-        println!("检测章节起始位置：");
+        println!("{}", t!("explain-detecting-chapters"));
     }
     
     for (line_num, line) in lines.iter().enumerate() {
@@ -30,8 +36,8 @@ pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Ve
         for (i, regex) in regex_patterns.iter().enumerate() {
             if regex.is_match(line) {
                 if explain {
-                    println!("  行 {}: 匹配正则 {} -> {}", line_num + 1, i + 1, line.trim());
-                }
+                println!("{}", t!("explain-matched-line", line = line_num + 1, index = i + 1, content = line.trim()));
+            }
                 chapter_starts.push((line_num, line));
                 break;
             }

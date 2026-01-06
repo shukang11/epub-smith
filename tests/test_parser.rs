@@ -41,6 +41,7 @@ fn test_parse_txt() -> Result<()> {
         language: "zh-CN".to_string(),
         check: false,
         verbose: false,
+        lang: None,
     };
     
     let config = Config::from_args(&args)?;

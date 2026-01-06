@@ -1,0 +1,40 @@
+_version: 1
+
+# Success messages
+success-epub-generated: "✓ EPUB generated successfully!"
+success-chapters-increasing: "✅ Chapter numbers are increasing, meeting requirements"
+
+# Warning messages
+warning-duplicate-chapter-number: "⚠️ Warning: Duplicate chapter number found: %{number}"
+warning-chapter-not-increasing: "⚠️ Warning: Chapter numbers are not increasing, from %{previous} to %{current}"
+
+# Info messages
+info-no-chapter-numbers: "ℹ️ No clear chapter numbers detected, skipping coherence check"
+info-total-chapters-processed: "ℹ️ Total chapters processed: %{count}"
+
+# Section titles
+title-detected-chapters: "Detected chapters:"
+title-chapter-outline: "Chapter outline:"
+
+# Output labels
+label-output: "Output:"
+
+# Processing messages
+processing-parsing-text: "Parsing text file..."
+processing-rendering-xhtml: "Rendering XHTML files..."
+processing-packaging-epub: "Packaging EPUB..."
+
+# Success messages with context
+success-text-parsed: "Text file parsed successfully"
+success-xhtml-rendered: "XHTML files rendered successfully"
+success-epub-packaged: "EPUB packaged successfully"
+
+# Epubcheck messages
+epubcheck-not-implemented: "Note: epubcheck validation is not implemented yet."
+epubcheck-instruction: "To validate your EPUB, download epubcheck from https://github.com/w3c/epubcheck"
+epubcheck-command: "and run: java -jar epubcheck.jar %{path}"
+
+# Explain mode messages
+explain-using-regex: "Using chapter regex patterns:"
+explain-detecting-chapters: "Detecting chapter start positions:"
+explain-matched-line: "  Line %{line}: Matched regex %{index} -> %{content}"

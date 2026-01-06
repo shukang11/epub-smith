@@ -4,6 +4,12 @@ use anyhow::{Context, Result};
 use zip::write::{ZipWriter, FileOptions};
 use zip::CompressionMethod;
 
+// 初始化国际化支持
+rust_i18n::i18n!("locales", fallback = "en");
+
+// 导入t宏用于翻译
+use rust_i18n::t;
+
 use crate::{models::Book, config::Config};
 
 /// 将书籍打包成EPUB文件
@@ -93,9 +99,9 @@ pub fn validate_epub(path: &PathBuf) -> Result<()> {
     }
     
     println!("EPUB file created successfully: {}", path.display());
-    println!("Note: epubcheck validation is not implemented yet.");
-    println!("To validate your EPUB, download epubcheck from https://github.com/w3c/epubcheck");
-    println!("and run: java -jar epubcheck.jar {}", path.display());
+    println!("{}", t!("epubcheck-not-implemented"));
+    println!("{}", t!("epubcheck-instruction"));
+    println!("{}", t!("epubcheck-command", path = path.display()));
     
     Ok(())
 }

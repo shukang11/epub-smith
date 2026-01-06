@@ -1,0 +1,40 @@
+_version: 1
+
+# Success messages
+success-epub-generated: "✓ EPUB生成成功！"
+success-chapters-increasing: "✅ 章节号是递增的，符合要求"
+
+# Warning messages
+warning-duplicate-chapter-number: "⚠️ 警告：发现重复的章节号: %{number}"
+warning-chapter-not-increasing: "⚠️ 警告：章节号不是递增的，从 %{previous} 到 %{current}"
+
+# Info messages
+info-no-chapter-numbers: "ℹ️ 未检测到明确的章节号，跳过连贯性检查"
+info-total-chapters-processed: "ℹ️ 处理的章节总数：%{count}"
+
+# Section titles
+title-detected-chapters: "检测到的章节："
+title-chapter-outline: "章节大纲："
+
+# Output labels
+label-output: "输出："
+
+# Processing messages
+processing-parsing-text: "正在解析文本文件..."
+processing-rendering-xhtml: "正在渲染XHTML文件..."
+processing-packaging-epub: "正在打包EPUB..."
+
+# Success messages with context
+success-text-parsed: "文本文件解析成功"
+success-xhtml-rendered: "XHTML文件渲染成功"
+success-epub-packaged: "EPUB打包成功"
+
+# Epubcheck messages
+epubcheck-not-implemented: "注意：epubcheck验证尚未实现。"
+epubcheck-instruction: "要验证您的EPUB，请从https://github.com/w3c/epubcheck下载epubcheck"
+epubcheck-command: "然后运行：java -jar epubcheck.jar %{path}"
+
+# Explain mode messages
+explain-using-regex: "使用的章节正则表达式："
+explain-detecting-chapters: "检测章节起始位置："
+explain-matched-line: "  行 %{line}：匹配正则 %{index} -> %{content}"

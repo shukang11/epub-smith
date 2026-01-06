@@ -1,9 +1,15 @@
+// 初始化国际化支持
+rust_i18n::i18n!("locales", fallback = "en");
+
 pub mod cli;
 pub mod config;
 pub mod models;
 pub mod parser;
 pub mod renderer;
 pub mod packager;
+
+// 导出t宏供外部使用
+pub use rust_i18n::t;
 
 /// 将中文数字转换为阿拉伯数字（支持复杂数字，如一百二十三）
 pub fn convert_chinese_to_arabic(chinese_num: &str) -> Option<usize> {

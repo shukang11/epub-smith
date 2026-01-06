@@ -67,4 +67,8 @@ pub struct Args {
     /// 显示详细日志
     #[arg(short = 'v', long = "verbose", group = "debug_options")]
     pub verbose: bool,
+
+    /// 指定输出语言（例如：en, zh）
+    #[arg(long = "lang", value_name = "LANGUAGE")]
+    pub lang: Option<String>,
 }

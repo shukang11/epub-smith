@@ -31,6 +31,8 @@ fn test_chinese_chapters() {
     
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--dry-run")
+       .arg("--lang")
+       .arg("zh-CN")
        .arg(temp_file.path());
     
     cmd.assert()
@@ -132,8 +134,7 @@ Special 1: Bonus Content
 This is bonus content."#;
     let content_file = NamedTempFile::new().unwrap();
     std::fs::write(content_file.path(), content).unwrap();
-    
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+ let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--dry-run")
        .arg("--rules")
        .arg(rules_file.path())
@@ -163,6 +164,8 @@ fn test_discontinuous_chapters() {
     
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--dry-run")
+       .arg("--lang")
+       .arg("zh-CN")
        .arg(temp_file.path());
     
     cmd.assert()
@@ -344,6 +347,8 @@ fn test_explain_mode() {
     let mut cmd = Command::cargo_bin("booksmith").unwrap();
     cmd.arg("--explain")
        .arg("--dry-run")
+       .arg("--lang")
+       .arg("zh-CN")
        .arg(temp_file.path());
     
     cmd.assert()
