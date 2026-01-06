@@ -2,11 +2,12 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use tera::{Tera, Context as TeraContext};
 use tempfile::tempdir;
+use rust_i18n::t;
 
 use crate::{models::{Book, Chapter}, config::Config};
 
 /// 将书籍渲染为XHTML文件
-pub fn render_book(book: &Book, _config: &Config) -> Result<Vec<PathBuf>> {
+pub fn render_book(book: &Book, config: &Config) -> Result<Vec<PathBuf>> {
     // 初始化Tera模板引擎
     let tera = initialize_tera()?;
     
@@ -34,7 +35,7 @@ pub fn render_book(book: &Book, _config: &Config) -> Result<Vec<PathBuf>> {
     
     // 渲染CSS文件
     let css_path = temp_path.join("style.css");
-    render_css(&css_path)?;
+    let _css_content = render_css(&css_path, &config.style)?;
     xhtml_files.push(css_path);
     
     // 渲染OPF文件
@@ -119,12 +120,28 @@ pub fn render_opf(book: &Book, xhtml_files: &[PathBuf], tera: &Tera, output_path
 }
 
 /// 渲染CSS文件
-pub fn render_css(output_path: &PathBuf) -> Result<()> {
-    // 使用默认CSS内容
-    let css_content = include_str!("../resources/css/default.css");
-    std::fs::write(output_path, css_content)?;
-    
-    Ok(())
+pub fn render_css(output_path: &PathBuf, custom_css: &Option<PathBuf>) -> Result<String> {
+    // 尝试加载自定义CSS，如果失败则使用默认CSS
+    let css_content = if let Some(ref css_path) = custom_css {
+        match std::fs::read_to_string(css_path) {
+            Ok(content) => {
+                eprintln!("{} {}", t!("info-using-custom-css"), css_path.display());
+                content
+            }
+            Err(e) => {
+                eprintln!("{} {}: {}", t!("warning-failed-to-load-css"), css_path.display(), e);
+                eprintln!("{}", t!("info-falling-back-to-default-css"));
+                include_str!("../resources/css/default.css").to_string()
+            }
+        }
+    } else {
+        include_str!("../resources/css/default.css").to_string()
+    };
+
+    // 写入CSS文件
+    std::fs::write(output_path, &css_content)?;
+
+    Ok(css_content)
 }
 
 /// 渲染mimetype文件

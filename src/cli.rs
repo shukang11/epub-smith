@@ -17,8 +17,8 @@ pub const DEFAULT_OUTPUT_FILENAME: &str = "book.epub";
 )]
 pub struct Args {
     /// 输入TXT文件或目录
-    #[arg(value_name = "INPUT")]
-    pub input: PathBuf,
+    #[arg(value_name = "INPUT", group = "input_group")]
+    pub input: Option<PathBuf>,
 
     /// 规则文件路径
     #[arg(short = 'r', long = "rules", value_name = "RULES", group = "output_options")]
@@ -71,4 +71,12 @@ pub struct Args {
     /// 指定输出语言（例如：en, zh）
     #[arg(long = "lang", value_name = "LANGUAGE")]
     pub lang: Option<String>,
+
+    /// 导出样式模板到指定目录
+    #[arg(long = "export-template", value_name = "DIRECTORY", group = "input_group")]
+    pub export_template: Option<PathBuf>,
+
+    /// 指定自定义CSS样式文件
+    #[arg(long = "style", value_name = "CSS_FILE")]
+    pub style: Option<PathBuf>,
 }

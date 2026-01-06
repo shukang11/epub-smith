@@ -129,7 +129,24 @@ fn process_paragraphs(lines: &[&str], rules: &crate::models::ParagraphRules) -> 
                     current_paragraph.push('\n');
                 }
             }
-            current_paragraph.push_str(processed_line);
+            
+            // 修复错误格式的HTML标签
+            let fixed_line = processed_line
+                // 修复 <ahrefhttp://example.com> 这种错误格式（缺少空格）
+                .replace("<a", "<a ")
+                // 修复 hrefhttp://example.com 这种错误格式（缺少等号）
+                .replace("hrefhttp://", "href=\"http://")
+                .replace("hrefhttps://", "href=\"https://")
+                // 修复 target_blank 这种错误格式（缺少等号和引号）
+                .replace("target_blank", "target=\"_blank\"")
+                // 修复 bl_id140700 这种错误格式（缺少等号）
+                .replace("bl_id", "bl_id=")
+                .replace("a_id", "a_id=")
+                .replace("b_id", "b_id=")
+                // 修复 URL 末尾缺少引号的问题
+                .replace("target=\"_blank\">", ")\" target=\"_blank\">");
+            
+            current_paragraph.push_str(&fixed_line);
         }
     }
     

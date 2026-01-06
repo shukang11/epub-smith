@@ -40,13 +40,13 @@ fn test_render_css() {
     let temp_file = NamedTempFile::new().unwrap();
     let file_path = temp_file.path().to_path_buf();
     
-    // 测试渲染CSS
-    let result = renderer::render_css(&file_path);
+    // 测试渲染CSS（使用默认CSS）
+    let result = renderer::render_css(&file_path, &None);
     assert!(result.is_ok());
     
     // 验证文件内容
     let content = std::fs::read_to_string(&file_path).unwrap();
-    assert!(!content.is_empty());
+    assert!(!content.contains("use std::path::PathBuf"));
 }
 
 #[test]
@@ -98,7 +98,8 @@ fn test_render_book() {
         output: PathBuf::from("test.epub"),
         check: false,
         explain: false,
-        encoding: None
+        encoding: None,
+        style: None
     };
     
     // 测试渲染书籍

@@ -17,6 +17,8 @@ pub struct Config {
     pub explain: bool,
     /// 输入文件编码（如果指定）
     pub encoding: Option<String>,
+    /// 自定义CSS样式文件路径
+    pub style: Option<PathBuf>,
 }
 
 impl Config {
@@ -30,11 +32,11 @@ impl Config {
         };
 
         // 如果输出路径是默认值，且输入是文件，使用输入文件名作为输出文件名（替换扩展名）
-        let output = if args.output == PathBuf::from(DEFAULT_OUTPUT_FILENAME) && args.input.is_file() {
+        let output = if args.output == PathBuf::from(DEFAULT_OUTPUT_FILENAME) && args.input.is_some() && args.input.as_ref().unwrap().is_file() {
             // 获取输入文件名，替换扩展名为.epub
-            let input_filename = args.input.file_name()
+            let input_filename = args.input.as_ref().unwrap().file_name()
                 .and_then(|os_str| os_str.to_str())
-                .ok_or_else(|| anyhow::anyhow!("Failed to get filename from input path: {}", args.input.display()))?;
+                .ok_or_else(|| anyhow::anyhow!("Failed to get filename from input path: {}", args.input.as_ref().unwrap().display()))?;
             
             let output_filename = if let Some((name, _)) = input_filename.rsplit_once('.') {
                 format!("{}.epub", name)
@@ -52,6 +54,7 @@ impl Config {
             check: args.check,
             explain: args.explain,
             encoding: args.encoding.clone(),
+            style: args.style.clone(),
         })
     }
 

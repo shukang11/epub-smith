@@ -1,8 +1,46 @@
-/* Default CSS for BookSmith generated EPUB */
+/*
+ * BookSmith 默认样式表
+ * ====================
+ * 本文件定义了生成的 EPUB 书籍的默认视觉样式。
+ * 你可以编辑此文件来自定义书籍的外观。
+ *
+ * 【使用说明】
+ * 1. 使用 --export-template 导出本文件到本地
+ * 2. 编辑本文件修改样式
+ * 3. 使用 --style 参数指定修改后的样式文件生成 EPUB
+ * 4. 打开 preview.html 在浏览器中预览效果
+ *
+ * 【推荐阅读设备】
+ * - 衬线字体适合长时间阅读（宋体、明体、Georgia）
+ * - 无衬线字体适合屏幕阅读（微软雅黑、San Francisco）
+ * - 16-18px 是舒适的阅读字体大小
+ * - 行高 1.5-1.8 提供良好阅读体验
+ */
 
+/* ========== 基础字符集声明 ========== */
 @charset "UTF-8";
 
-/* Base styles */
+/* ========== 页面基础样式 ========== */
+/* 
+ * body 选择器控制整本书的全局样式
+ * 
+ * font-family: 字体族
+ *   - "SimSun" / "Songti SC": 宋体（Windows/macOS 中文字体）
+ *   - "STSong": 华文宋体
+ *   - "AR PL SungtiL GB": Linux 文鼎宋体
+ *   - "Noto Serif CJK SC": Google Noto 衬线中文字体
+ *   - serif: 通用衬线字体后备
+ * 
+ * font-size: 基础字体大小（16px 是标准阅读大小）
+ * 
+ * line-height: 行高（1.5-1.8 推荐，1.5 是默认，1.8 更宽松）
+ * 
+ * color: 文字颜色（#000000 纯黑，可改为 #333333 浅黑更护眼）
+ * 
+ * background-color: 背景颜色（#ffffff 纯白，可改为 #f5f5dc 米黄护眼）
+ * 
+ * margin / padding: 外边距和内边距（EPUB 阅读器通常忽略这些）
+ */
 body {
     font-family: "SimSun", "Songti SC", "STSong", "AR PL SungtiL GB", "Noto Serif CJK SC", serif;
     font-size: 16px;
@@ -13,14 +51,38 @@ body {
     padding: 0;
 }
 
-/* Container */
+/* ========== 内容容器样式 ========== */
+/* 
+ * .container 类用于包裹书籍主要内容
+ * 
+ * max-width: 最大宽度（800px 适合大多数设备）
+ * 
+ * margin: 0 auto 实现水平居中
+ * 
+ * padding: 内边距提供四周留白
+ */
 .container {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
 }
 
-/* Chapter title */
+/* ========== 章节标题样式 ========== */
+/* 
+ * h1.chapter-title 控制章节标题的显示
+ * 
+ * font-size: 标题字体大小（24px 比正文大 50%）
+ * 
+ * font-weight: bold 加粗显示
+ * 
+ * text-align: center 居中对齐
+ * 
+ * margin: 外边距（上下 40px，左右 0，底部 30px）
+ * 
+ * padding-bottom: 底部内边距（标题下方的空白）
+ * 
+ * border-bottom: 底部边框（1px 实线灰色）
+ */
 h1.chapter-title {
     font-size: 24px;
     font-weight: bold;
@@ -30,18 +92,39 @@ h1.chapter-title {
     border-bottom: 1px solid #cccccc;
 }
 
-/* Chapter content */
+/* ========== 段落样式 ========== */
+/* 
+ * p.chapter-content 控制正文段落的显示
+ * 
+ * text-indent: 首行缩进（2em 等于两个汉字宽度，中文排版标准）
+ * 
+ * margin: 段落间距（上下 10px，左右 0）
+ * 
+ * text-align: 两端对齐（justify 对中文很重要）
+ * 
+ * 【提示】如果不喜欢首行缩进，可以设置为 0
+ */
 p.chapter-content {
     text-indent: 2em;
     margin: 10px 0;
     text-align: justify;
 }
 
-/* Table of contents */
+/* ========== 目录导航样式 ========== */
+/* 
+ * nav#toc 控制目录页面的显示
+ * 
+ * epub:type="toc" 是 EPUB 标准定义的目录导航语义
+ * 
+ * padding: 目录四周的留白
+ */
 nav#toc {
     padding: 20px;
 }
 
+/* 
+ * nav#toc h1 控制目录标题的样式
+ */
 nav#toc h1 {
     font-size: 20px;
     font-weight: bold;
@@ -49,15 +132,40 @@ nav#toc h1 {
     margin-bottom: 30px;
 }
 
+/* 
+ * nav#toc ol 控制目录列表的样式
+ * 
+ * list-style-type: none 移除默认列表标记
+ * 
+ * padding-left: 列表左内边距（设为 0 移除缩进）
+ */
 nav#toc ol {
     list-style-type: none;
     padding-left: 0;
 }
 
+/* 
+ * nav#toc li 控制每个目录项的样式
+ * 
+ * margin-bottom: 项之间的垂直间距
+ */
 nav#toc li {
     margin-bottom: 10px;
 }
 
+/* 
+ * nav#toc a 控制目录链接的样式
+ * 
+ * color: 链接文字颜色
+ * 
+ * text-decoration: none 移除下划线
+ * 
+ * display: block 使链接占满整行
+ * 
+ * padding: 链接内容的内边距
+ * 
+ * border-radius: 圆角边框（4px 轻微圆角）
+ */
 nav#toc a {
     color: #000000;
     text-decoration: none;
@@ -66,13 +174,57 @@ nav#toc a {
     border-radius: 4px;
 }
 
+/* 
+ * nav#toc a:hover 控制鼠标悬停时的链接样式
+ * 
+ * background-color: 悬停时的背景色（浅灰色）
+ */
 nav#toc a:hover {
     background-color: #f0f0f0;
 }
 
-/* Page breaks for print */
+/* ========== 打印样式 ========== */
+/* 
+ * @media print 定义打印时的特殊样式
+ * 
+ * page-break-before: always 在每个章节标题前强制分页
+ * 
+ * 【注意】此样式仅在打印时生效
+ */
 @media print {
     h1.chapter-title {
         page-break-before: always;
     }
 }
+
+/* ========== 常用自定义示例 ========== */
+/* 
+ * 【示例1：现代无衬线字体风格】
+ * 如果你喜欢更现代的阅读体验，可以取消注释以下样式：
+ *
+ * body {
+ *     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+ *     font-size: 18px;
+ *     line-height: 1.8;
+ *     color: #333333;
+ * }
+ *
+ * 【示例2：护眼米黄背景】
+ * 如果长时间阅读，可以调整为护眼模式：
+ *
+ * body {
+ *     background-color: #f5f5dc;
+ *     color: #333333;
+ * }
+ *
+ * 【示例3：更大的字体】
+ * 如果视力不好，可以增大字体：
+ *
+ * body {
+ *     font-size: 20px;
+ * }
+ *
+ * h1.chapter-title {
+ *     font-size: 28px;
+ * }
+ */

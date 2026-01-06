@@ -114,7 +114,8 @@ fn test_package_epub() {
         output: output_path.clone(),
         check: false,
         explain: false,
-        encoding: None
+        encoding: None,
+        style: None
     };
     
     // 创建空的Book结构体
@@ -163,7 +164,8 @@ fn test_package_epub_with_check() {
         output: output_path.clone(),
         check: true,
         explain: false,
-        encoding: None
+        encoding: None,
+        style: None
     };
     
     // 创建空的Book结构体

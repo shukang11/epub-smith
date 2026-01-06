@@ -38,3 +38,15 @@ epubcheck-command: "and run: java -jar epubcheck.jar %{path}"
 explain-using-regex: "Using chapter regex patterns:"
 explain-detecting-chapters: "Detecting chapter start positions:"
 explain-matched-line: "  Line %{line}: Matched regex %{index} -> %{content}"
+
+# CSS related messages
+info-using-custom-css: "ℹ️ Using custom CSS:"
+warning-failed-to-load-css: "⚠️ Warning: Failed to load CSS file"
+info-falling-back-to-default-css: "ℹ️ Falling back to default CSS"
+
+# Export template messages
+export-template-success: "✓ Template exported successfully!"
+export-template-info: "Exported files:"
+export-template-css: "- style.css: style file, can be edited"
+export-template-preview: "- preview.html: preview file, can be opened in browser"
+export-template-readme: "- README.md: usage instructions"

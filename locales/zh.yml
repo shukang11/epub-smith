@@ -38,3 +38,15 @@ epubcheck-command: "然后运行：java -jar epubcheck.jar %{path}"
 explain-using-regex: "使用的章节正则表达式："
 explain-detecting-chapters: "检测章节起始位置："
 explain-matched-line: "  行 %{line}：匹配正则 %{index} -> %{content}"
+
+# CSS related messages
+info-using-custom-css: "ℹ️ 使用自定义CSS样式："
+warning-failed-to-load-css: "⚠️ 警告：无法加载CSS文件"
+info-falling-back-to-default-css: "ℹ️ 回退到默认CSS样式"
+
+# Export template messages
+export-template-success: "✓ 模板导出成功！"
+export-template-info: "导出的文件："
+export-template-css: "- style.css：样式文件，可编辑修改"
+export-template-preview: "- preview.html：预览文件，可在浏览器中打开"
+export-template-readme: "- README.md：使用说明"
