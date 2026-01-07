@@ -1,6 +1,6 @@
-use std::path::PathBuf;
 use anyhow::Result;
-use epub_smith::{parser::parse_txt, config::Config, cli::Args};
+use epub_smith::{cli::Args, config::Config, parser::parse_txt};
+use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
 #[test]
@@ -20,15 +20,15 @@ fn test_parse_txt() -> Result<()> {
 
 番外 后续
 这是番外的内容"#;
-    
+
     // Create temporary file
     let temp_file = NamedTempFile::new()?;
     std::fs::write(temp_file.path(), content)?;
     let input = temp_file.path().to_owned();
-    
+
     // Create default args and config
     let args = Args {
-        input: Some(input.clone()),
+        input: vec![input.clone()],
         rules: None,
         output: PathBuf::from("output.epub"),
         encoding: None,
@@ -46,12 +46,12 @@ fn test_parse_txt() -> Result<()> {
         export_template: None,
         style: None,
     };
-    
+
     let config = Config::from_args(&args)?;
-    
+
     // Parse the file
-    let book = parse_txt(&input, &config)?;
-    
+    let book = parse_txt(&[input], &config)?;
+
     // Verify the result
     assert_eq!(book.chapters.len(), 5);
     assert_eq!(book.chapters[0].title, "第1章 开端");
@@ -59,7 +59,94 @@ fn test_parse_txt() -> Result<()> {
     assert_eq!(book.chapters[2].title, "第3章 高潮");
     assert_eq!(book.chapters[3].title, "第4章 结局");
     assert_eq!(book.chapters[4].title, "番外 后续");
-    
+
+    Ok(())
+}
+
+#[test]
+fn test_parse_multiple_txt_files() -> Result<()> {
+    // Create content for multiple files
+    let content1 = r#"第1章 开端
+这是第一章的内容"#;
+
+    let content2 = r#"第2章 发展
+这是第二章的内容"#;
+
+    let content3 = r#"第3章 高潮
+这是第三章的内容"#;
+
+    let content4 = r#"第4章 结局
+这是第四章的内容"#;
+
+    // Create temporary files
+    let temp_file1 = NamedTempFile::new()?;
+    std::fs::write(temp_file1.path(), content1)?;
+    let input1 = temp_file1.path().to_owned();
+
+    let temp_file2 = NamedTempFile::new()?;
+    std::fs::write(temp_file2.path(), content2)?;
+    let input2 = temp_file2.path().to_owned();
+
+    let temp_file3 = NamedTempFile::new()?;
+    std::fs::write(temp_file3.path(), content3)?;
+    let input3 = temp_file3.path().to_owned();
+
+    let temp_file4 = NamedTempFile::new()?;
+    std::fs::write(temp_file4.path(), content4)?;
+    let input4 = temp_file4.path().to_owned();
+
+    // Create default args and config
+    let args = Args {
+        input: vec![
+            input1.clone(),
+            input2.clone(),
+            input3.clone(),
+            input4.clone(),
+        ],
+        rules: None,
+        output: PathBuf::from("output.epub"),
+        encoding: None,
+        dry_run: false,
+        print_outline: false,
+        explain: false,
+        title: None,
+        author: None,
+        cover: None,
+        language: "zh-CN".to_string(),
+        check: false,
+        verbose: false,
+        debug: false,
+        lang: None,
+        export_template: None,
+        style: None,
+    };
+
+    let config = Config::from_args(&args)?;
+
+    // Parse the files
+    let inputs = vec![input1, input2, input3, input4];
+    let book = parse_txt(&inputs, &config)?;
+
+    // Verify the result
+    assert_eq!(book.chapters.len(), 4);
+    assert_eq!(book.chapters[0].title, "第1章 开端");
+    assert_eq!(book.chapters[1].title, "第2章 发展");
+    assert_eq!(book.chapters[2].title, "第3章 高潮");
+    assert_eq!(book.chapters[3].title, "第4章 结局");
+
+    // Verify the content of each chapter
+    assert!(!book.chapters[0].paragraphs.is_empty());
+    assert!(book.chapters[0].paragraphs[0].contains("这是第一章的内容"));
+
+    assert!(!book.chapters[1].paragraphs.is_empty());
+    assert!(book.chapters[1].paragraphs[0].contains("这是第二章的内容"));
+
+    assert!(!book.chapters[2].paragraphs.is_empty());
+    assert!(book.chapters[2].paragraphs[0].contains("这是第三章的内容"));
+
+    assert!(!book.chapters[3].paragraphs.is_empty());
+    assert!(book.chapters[3].paragraphs[0].contains("这是第四章的内容"));
+
     Ok(())
 }
 
@@ -90,15 +177,15 @@ fn test_parse_txt_with_broken_html() -> Result<()> {
 这是第五章的内容，包含错误格式的标题标签：
 <h1title主标题>主标题</h1>
 <h2title副标题>副标题</h2>"#;
-    
+
     // Create temporary file
     let temp_file = NamedTempFile::new()?;
     std::fs::write(temp_file.path(), content)?;
     let input = temp_file.path().to_owned();
-    
+
     // Create default args and config
     let args = Args {
-        input: Some(input.clone()),
+        input: vec![input.clone()],
         rules: None,
         output: PathBuf::from("output.epub"),
         encoding: None,
@@ -116,76 +203,84 @@ fn test_parse_txt_with_broken_html() -> Result<()> {
         export_template: None,
         style: None,
     };
-    
+
     let config = Config::from_args(&args)?;
-    
+
     // Parse the file
-    let book = parse_txt(&input, &config)?;
-    
+    let book = parse_txt(&[input], &config)?;
+
     // Verify the result
     assert_eq!(book.chapters.len(), 5);
-    
+
     // Check chapter 1: a tag with http link
     let chapter1_paragraphs = &book.chapters[0].paragraphs;
     assert!(!chapter1_paragraphs.is_empty());
-    
+
     // 调试输出：打印所有段落内容
     println!("Chapter 1 paragraphs:");
     for (i, p) in chapter1_paragraphs.iter().enumerate() {
         println!("  Paragraph {}: {}", i + 1, p);
     }
-    
+
     let chapter1_has_fixed_link = chapter1_paragraphs
         .iter()
         .any(|p| p.contains(r#"href="http://www.example.com"#));
-    assert!(chapter1_has_fixed_link, "Chapter 1 should contain fixed http link");
-    
+    assert!(
+        chapter1_has_fixed_link,
+        "Chapter 1 should contain fixed http link"
+    );
+
     // Check chapter 2: a tag with https link and special characters
     let chapter2_paragraphs = &book.chapters[1].paragraphs;
     assert!(!chapter2_paragraphs.is_empty());
-    
+
     let chapter2_has_fixed_link = chapter2_paragraphs
         .iter()
         .any(|p| p.contains(r#"href="https://www.test.com"#));
-    assert!(chapter2_has_fixed_link, "Chapter 2 should contain fixed https link");
-    
+    assert!(
+        chapter2_has_fixed_link,
+        "Chapter 2 should contain fixed https link"
+    );
+
     let chapter2_has_escaped_chars = chapter2_paragraphs
         .iter()
         .any(|p| p.contains("&amp;") && p.contains("&lt;") && p.contains("&gt;"));
-    assert!(chapter2_has_escaped_chars, "Chapter 2 should contain escaped special characters");
-    
+    assert!(
+        chapter2_has_escaped_chars,
+        "Chapter 2 should contain escaped special characters"
+    );
+
     // Check chapter 3: img tag with src attribute
     let chapter3_paragraphs = &book.chapters[2].paragraphs;
     assert!(!chapter3_paragraphs.is_empty());
-    
+
     // 调试输出：打印第3章段落内容
     println!("Chapter 3 paragraphs:");
     for (i, p) in chapter3_paragraphs.iter().enumerate() {
         println!("  Paragraph {}: {}", i + 1, p);
     }
-    
+
     let chapter3_has_fixed_img = chapter3_paragraphs
         .iter()
         .any(|p| p.contains(r#"src="http://www.example.com"#));
-    assert!(chapter3_has_fixed_img, "Chapter 3 should contain fixed img tag");
-    
+    assert!(
+        chapter3_has_fixed_img,
+        "Chapter 3 should contain fixed img tag"
+    );
+
     // Check chapter 4: div, p, span tags with attributes
     let chapter4_paragraphs = &book.chapters[3].paragraphs;
     assert!(!chapter4_paragraphs.is_empty());
-    
-    let chapter4_has_div = chapter4_paragraphs
-        .iter()
-        .any(|p| p.contains(r#"<div"#));
+
+    let chapter4_has_div = chapter4_paragraphs.iter().any(|p| p.contains(r#"<div"#));
     assert!(chapter4_has_div, "Chapter 4 should contain div tag");
-    
+
     // Check chapter 5: h1, h2 tags with attributes
     let chapter5_paragraphs = &book.chapters[4].paragraphs;
     assert!(!chapter5_paragraphs.is_empty());
-    
-    let chapter5_has_h1 = chapter5_paragraphs
-        .iter()
-        .any(|p| p.contains(r#"<h1"#));
+
+    let chapter5_has_h1 = chapter5_paragraphs.iter().any(|p| p.contains(r#"<h1"#));
     assert!(chapter5_has_h1, "Chapter 5 should contain h1 tag");
-    
+
     Ok(())
 }

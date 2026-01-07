@@ -1,5 +1,5 @@
+use crate::output::GLOBAL_OUTPUT;
 use anyhow::{Context, Result};
-use console::style;
 use rust_i18n::t;
 use std::path::PathBuf;
 
@@ -7,8 +7,12 @@ use std::path::PathBuf;
 pub fn export_template(export_dir: &PathBuf) -> Result<()> {
     use std::fs;
 
-    fs::create_dir_all(export_dir)
-        .with_context(|| format!("Failed to create export directory: {}", export_dir.display()))?;
+    fs::create_dir_all(export_dir).with_context(|| {
+        format!(
+            "Failed to create export directory: {}",
+            export_dir.display()
+        )
+    })?;
 
     let css_path = export_dir.join("style.css");
     let css_content = include_str!("resources/css/default.css");
@@ -29,12 +33,12 @@ pub fn export_template(export_dir: &PathBuf) -> Result<()> {
     fs::write(&readme_path, readme_content)
         .with_context(|| format!("Failed to write README file: {}", readme_path.display()))?;
 
-    println!("{}", style(t!("export-template-success")).green().bold());
-    println!("{}", t!("export-template-info"));
-    println!("{}", t!("export-template-css"));
-    println!("{}", t!("export-template-preview"));
-    println!("{}", t!("export-template-readme"));
-    println!("{} {}", t!("label-output"), style(export_dir.display()).blue());
+    GLOBAL_OUTPUT.success(t!("export-template-success"));
+    GLOBAL_OUTPUT.info(t!("export-template-info"));
+    GLOBAL_OUTPUT.info(t!("export-template-css"));
+    GLOBAL_OUTPUT.info(t!("export-template-preview"));
+    GLOBAL_OUTPUT.info(t!("export-template-readme"));
+    GLOBAL_OUTPUT.info(format!("{} {}", t!("label-output"), export_dir.display()));
 
     Ok(())
 }

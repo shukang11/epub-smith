@@ -2,6 +2,8 @@
 
 A predictable, explainable, and reusable TXT to EPUB CLI tool written in Rust.
 
+**Core Philosophy**: Focus on doing one thing well - generating standardized, stable EPUB files. For other formats, use downstream professional tools with our recommended pipelines.
+
 ## Features
 
 - **Predictable Results**: Convert plain text files to well-structured EPUB books with consistent output
@@ -13,6 +15,10 @@ A predictable, explainable, and reusable TXT to EPUB CLI tool written in Rust.
 - **Debugging Tools**: Dry run mode, chapter outline preview, and detailed performance analysis
 - **Custom Styling**: Support for custom CSS styles
 - **EPUB Validation**: Optional integration with epubcheck for validation
+- **Multiple Input Files**: Merge multiple TXT files into a single EPUB book
+- **STDIN Support**: Read input from standard input for pipeline workflows
+- **Structure Snapshots**: Export and import chapter structure for reuse and manual adjustment
+- **Input Validation**: Diagnose text structure issues with lint mode
 
 ## Installation
 
@@ -102,6 +108,61 @@ Or with the short name:
 epbs --print-outline my_book.txt
 ```
 
+### Multiple Input Files
+
+Merge multiple TXT files into a single EPUB book:
+
+```bash
+# Merge all TXT files in src directory
+epub-smith src/*.txt -o combined_book.epub
+
+# Merge specific files in order
+epub-smith chapter1.txt chapter2.txt chapter3.txt -o book.epub
+```
+
+### STDIN Support
+
+Read input from standard input for pipeline workflows:
+
+```bash
+# Pipe content directly to EpubSmith
+cat novel.txt | epub-smith - -o novel.epub
+
+# Use with other CLI tools
+grep -v "#" raw.txt | sed 's/\r//g' | epub-smith - -o cleaned.epub
+```
+
+### Structure Snapshots
+
+Export chapter structure to a JSON file for reuse and manual adjustment:
+
+```bash
+# Export structure snapshot
+epub-smith novel.txt --snapshot structure.json
+
+# Use existing structure snapshot
+epub-smith novel.txt --use-snapshot structure.json
+
+# Manually edit structure.json to adjust chapters, then re-use
+```
+
+### Input Validation (lint mode)
+
+Diagnose text structure issues before conversion:
+
+```bash
+# Run lint on a single file
+epub-smith lint novel.txt
+
+# Example output:
+# 📄 File: novel.txt
+# ✅ Chapters detected: 10
+# ⚠️  Warning: Found 3 consecutive empty lines at line 150
+# ⚠️  Warning: Chapter 5 has duplicate title "Chapter 5"
+# ✅ Chapter numbering is consistent
+# ⚠️  Warning: Found 2 paragraphs longer than 1000 characters
+```
+
 ## Command Line Options
 
 EpubSmith provides two command names for convenience:
@@ -117,7 +178,7 @@ epbs [OPTIONS] <INPUT>
 ```
 
 Arguments:
-  <INPUT>  Input TXT file or directory
+  <INPUT>...  Input TXT file(s) or directory. Use - for STDIN
 
 Options:
   -r, --rules <RULES>        Rules file path
@@ -136,6 +197,9 @@ Options:
       --lang <LANGUAGE>      Specify output language (e.g., en, zh)
       --export-template <DIRECTORY>  Export style templates to specified directory
       --style <CSS_FILE>     Specify custom CSS style file
+      --snapshot <FILE>      Export chapter structure to JSON file
+      --use-snapshot <FILE>  Use existing chapter structure from JSON file
+  lint                       Run structure validation on input file
   -h, --help                 Print help information
   -V, --version              Print version information
 ```
@@ -240,6 +304,47 @@ Run the test suite to ensure everything is working correctly:
 cargo test
 ```
 
+## Recommended Pipelines
+
+EpubSmith focuses on generating standardized, stable EPUB files. For other formats, we recommend using professional downstream tools. Here are some common pipelines:
+
+### EPUB → Kindle (MOBI/KFX)
+
+```bash
+# Step 1: Generate EPUB with EpubSmith
+epub-smith novel.txt -o novel.epub
+
+# Step 2: Convert to MOBI using Calibre's ebook-convert
+ebook-convert novel.epub novel.mobi
+
+# Step 3: Send to Kindle via email or Calibre
+```
+
+### EPUB → PDF
+
+```bash
+# Step 1: Generate EPUB with EpubSmith
+epub-smith novel.txt -o novel.epub
+
+# Step 2: Convert to PDF using Calibre's ebook-convert
+ebook-convert novel.epub novel.pdf
+
+# Or use pandoc for more customization
+pandoc novel.epub -o novel.pdf --pdf-engine=xelatex
+```
+
+### Batch Processing with Downstream Tools
+
+```bash
+# Generate multiple EPUB files first
+epub-smith --batch /path/to/txt-files --output-dir /path/to/epub-files
+
+# Then convert all to MOBI in batch
+for epub in /path/to/epub-files/*.epub; do
+  ebook-convert "$epub" "${epub%.epub}.mobi"
+done
+```
+
 ## Project Structure
 
 ```
@@ -248,12 +353,17 @@ cargo test
 │   ├── renderer/        # EPUB rendering logic
 │   ├── resources/       # Default resources (CSS, etc.)
 │   ├── templates/       # Tera templates for EPUB generation
+│   ├── utils/           # Utility functions
+│   │   ├── coherence.rs # Chapter coherence checking
+│   │   ├── html.rs      # HTML processing functions
+│   │   └── number.rs    # Number conversion functions
 │   ├── cli.rs           # Command-line argument parsing
 │   ├── config.rs        # Configuration handling
 │   ├── export.rs        # Template export functionality
 │   ├── lib.rs           # Main library code
 │   ├── main.rs          # CLI entry point
 │   ├── models.rs        # Data models
+│   ├── output.rs        # Output management
 │   └── packager.rs      # EPUB packaging logic
 ├── tests/               # Test suite
 ├── locales/             # Internationalization files

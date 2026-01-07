@@ -12,64 +12,64 @@ pub const DEFAULT_OUTPUT_FILENAME: &str = "book.epub";
     version = env!("CARGO_PKG_VERSION"),
     about = "Convert TXT files to EPUB with predictable results",
     long_about = "EpubSmith is a CLI tool that converts plain text files to well-structured EPUB books with predictable results.",
-    after_help = "For more information, see https://github.com/yourusername/epub-smith\n\nExamples:\n  epub-smith my_book.txt\n  epub-smith --author \"John Doe\" --title \"My Book\" input.txt\n  epub-smith --rules custom_rules.toml --output my_book.epub input.txt",
+    after_help = "For more information, see https://github.com/yourusername/epub-smith\n\nExamples:\n  epub-smith my_book.txt\n  epub-smith file1.txt file2.txt file3.txt\n  epub-smith *.txt -o combined.epub\n  epub-smith --author \"John Doe\" --title \"My Book\" input.txt\n  cat novel.txt | epub-smith - -o novel.epub\n  epub-smith --rules custom_rules.toml --output my_book.epub input.txt",
     arg_required_else_help = true
 )]
 pub struct Args {
-    /// 输入TXT文件或目录
-    #[arg(value_name = "INPUT", group = "input_group")]
-    pub input: Option<PathBuf>,
+    /// 输入TXT文件或目录，使用 - 表示从标准输入读取
+    #[arg(value_name = "INPUT")]
+    pub input: Vec<PathBuf>,
 
     /// 规则文件路径
-    #[arg(short = 'r', long = "rules", value_name = "RULES", group = "output_options")]
+    #[arg(short = 'r', long = "rules", value_name = "RULES")]
     pub rules: Option<PathBuf>,
 
     /// 输出EPUB文件路径
-    #[arg(short = 'o', long = "output", value_name = "OUTPUT", default_value = DEFAULT_OUTPUT_FILENAME, group = "output_options")]
+    #[arg(short = 'o', long = "output", value_name = "OUTPUT", default_value = DEFAULT_OUTPUT_FILENAME)]
     pub output: PathBuf,
 
     /// 强制指定输入文件编码
-    #[arg(short = 'e', long = "encoding", value_name = "ENCODING", group = "output_options")]
+    #[arg(short = 'e', long = "encoding", value_name = "ENCODING")]
     pub encoding: Option<String>,
 
     /// 仅显示章节结构，不生成EPUB
-    #[arg(long = "dry-run", group = "preview_options")]
+    #[arg(long = "dry-run")]
     pub dry_run: bool,
 
     /// 输出章节大纲
-    #[arg(long = "print-outline", group = "preview_options")]
+    #[arg(long = "print-outline")]
     pub print_outline: bool,
 
     /// 解释解析过程
-    #[arg(long = "explain", group = "debug_options")]
+    #[arg(long = "explain")]
     pub explain: bool,
 
     /// 指定书名
-    #[arg(long = "title", value_name = "TITLE", group = "metadata_options")]
+    #[arg(long = "title", value_name = "TITLE")]
     pub title: Option<String>,
 
     /// 指定作者
-    #[arg(long = "author", value_name = "AUTHOR", group = "metadata_options")]
+    #[arg(long = "author", value_name = "AUTHOR")]
     pub author: Option<String>,
 
     /// 指定封面图片路径
-    #[arg(long = "cover", value_name = "COVER", group = "metadata_options")]
+    #[arg(long = "cover", value_name = "COVER")]
     pub cover: Option<PathBuf>,
 
     /// 指定书籍语言
-    #[arg(long = "language", value_name = "LANGUAGE", default_value = "zh-CN", group = "metadata_options")]
+    #[arg(long = "language", value_name = "LANGUAGE", default_value = "zh-CN")]
     pub language: String,
 
     /// 调用epubcheck校验EPUB
-    #[arg(long = "check", group = "output_options")]
+    #[arg(long = "check")]
     pub check: bool,
 
     /// 显示详细日志
-    #[arg(short = 'v', long = "verbose", group = "debug_options")]
+    #[arg(short = 'v', long = "verbose")]
     pub verbose: bool,
 
     /// 启用性能分析，显示各阶段耗时
-    #[arg(long = "debug", group = "debug_options")]
+    #[arg(long = "debug")]
     pub debug: bool,
 
     /// 指定输出语言（例如：en, zh）
@@ -77,7 +77,7 @@ pub struct Args {
     pub lang: Option<String>,
 
     /// 导出样式模板到指定目录
-    #[arg(long = "export-template", value_name = "DIRECTORY", group = "input_group")]
+    #[arg(long = "export-template", value_name = "DIRECTORY")]
     pub export_template: Option<PathBuf>,
 
     /// 指定自定义CSS样式文件

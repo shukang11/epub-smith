@@ -1,8 +1,11 @@
-use std::{fs, path::PathBuf};
 use anyhow::{Context, Result};
+use std::{fs, path::PathBuf};
 use toml::from_str;
 
-use crate::{cli::{Args, DEFAULT_OUTPUT_FILENAME}, models::{Rules, Meta}};
+use crate::{
+    cli::{Args, DEFAULT_OUTPUT_FILENAME},
+    models::{Meta, Rules},
+};
 
 /// 应用配置
 #[derive(Debug, Clone)]
@@ -31,22 +34,31 @@ impl Config {
             Rules::default()
         };
 
-        // 如果输出路径是默认值，且输入是文件，使用输入文件名作为输出文件名（替换扩展名）
-        let output = if let Some(input_path) = &args.input {
+        // 如果输出路径是默认值，且有输入文件，使用第一个输入文件的名称来生成输出文件名（替换扩展名）
+        let output = if !args.input.is_empty() {
             // 检查输出路径是否是默认值
             let output_str = args.output.to_str().unwrap_or_default();
-            if output_str == DEFAULT_OUTPUT_FILENAME && input_path.is_file() {
-                // 获取输入文件名，替换扩展名为.epub
-                let input_filename = input_path.file_name()
-                    .and_then(|os_str| os_str.to_str())
-                    .ok_or_else(|| anyhow::anyhow!("Failed to get filename from input path: {}", input_path.display()))?;
-                
-                let output_filename = if let Some((name, _)) = input_filename.rsplit_once('.') {
-                    format!("{}.epub", name)
+            if output_str == DEFAULT_OUTPUT_FILENAME {
+                // 获取第一个输入文件的文件名，替换扩展名为.epub
+                let first_input = &args.input[0];
+                if first_input.to_string_lossy() != "-" {
+                    // 不是stdin输入
+                    if let Some(input_filename) =
+                        first_input.file_name().and_then(|os_str| os_str.to_str())
+                    {
+                        let output_filename =
+                            if let Some((name, _)) = input_filename.rsplit_once('.') {
+                                format!("{}.epub", name)
+                            } else {
+                                format!("{}.epub", input_filename)
+                            };
+                        PathBuf::from(output_filename)
+                    } else {
+                        args.output.clone()
+                    }
                 } else {
-                    format!("{}.epub", input_filename)
-                };
-                PathBuf::from(output_filename)
+                    args.output.clone()
+                }
             } else {
                 args.output.clone()
             }

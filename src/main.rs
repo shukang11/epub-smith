@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use clap::Parser;
-use console::style;
 use indicatif::ProgressBar;
 use log::info;
 use std::time::Duration;
@@ -11,61 +10,25 @@ rust_i18n::i18n!("locales", fallback = "en");
 // Import t macro for translation
 use rust_i18n::t;
 
-use epub_smith::{cli::Args, config::Config, parser::parse_txt, renderer::render_book, packager::package_epub, extract_chapter_number, export::export_template};
-
-/// Check chapter coherence
-fn check_chapter_coherence(chapters: &[epub_smith::models::Chapter], extraction_rules: &Option<epub_smith::models::ChapterNumberExtraction>) {
-    let chapter_nums: Vec<Option<usize>> = chapters
-        .iter()
-        .map(|chapter| extract_chapter_number(&chapter.title, extraction_rules))
-        .collect();
-    
-    let numbered_chapters: Vec<usize> = chapter_nums
-        .iter()
-        .filter_map(|num| *num)
-        .collect();
-    
-    if !numbered_chapters.is_empty() {
-        let mut unique_nums = std::collections::HashSet::new();
-        for num in &numbered_chapters {
-            if !unique_nums.insert(*num) {
-                println!("{}", style(t!("warning-duplicate-chapter-number", number = num)).yellow());
-            }
-        }
-        
-        let mut is_increasing = true;
-        for i in 1..numbered_chapters.len() {
-            if numbered_chapters[i] <= numbered_chapters[i-1] {
-                is_increasing = false;
-                println!("{}", style(t!("warning-chapter-not-increasing", previous = numbered_chapters[i-1], current = numbered_chapters[i])).yellow());
-            }
-        }
-        
-        if is_increasing {
-            println!("{}", style(t!("success-chapters-increasing")).green());
-        }
-    } else {
-        println!("{}", style(t!("info-no-chapter-numbers")).cyan());
-    }
-}
+use epub_smith::output::GLOBAL_OUTPUT;
+use epub_smith::utils::coherence::check_chapter_coherence;
+use epub_smith::{
+    cli::Args, config::Config, export::export_template, packager::package_epub, parser::parse_txt,
+    renderer::render_book,
+};
 
 fn main() -> Result<()> {
     let log_level = if Args::try_parse_from(std::env::args_os())
         .map(|args| args.verbose)
-        .unwrap_or(false) {
+        .unwrap_or(false)
+    {
         log::LevelFilter::Info
     } else {
         log::LevelFilter::Warn
     };
 
     fern::Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "[{}] {}",
-                record.level(),
-                message
-            ))
-        })
+        .format(|out, message, record| out.finish(format_args!("[{}] {}", record.level(), message)))
         .level(log_level)
         .chain(std::io::stdout())
         .apply()?;
@@ -80,7 +43,9 @@ fn main() -> Result<()> {
     if !lang.is_empty() {
         rust_i18n::set_locale(lang);
     } else {
-        let supported_locales = ["en", "zh", "zh-CN", "zh-TW", "ja", "ko", "fr", "de", "es", "it"];
+        let supported_locales = [
+            "en", "zh", "zh-CN", "zh-TW", "ja", "ko", "fr", "de", "es", "it",
+        ];
 
         #[cfg(target_os = "macos")]
         {
@@ -88,8 +53,7 @@ fn main() -> Result<()> {
             if let Ok(output) = Command::new("defaults")
                 .args(["read", "-g", "AppleLanguages"])
                 .output()
-            {
-                if output.status.success() {
+                && output.status.success() {
                     let stdout = String::from_utf8_lossy(&output.stdout);
                     if let Some(lang_code) = stdout
                         .split(&['"', '(', ')', ','])
@@ -108,14 +72,13 @@ fn main() -> Result<()> {
                             rust_i18n::set_locale("ko");
                         }
                     }
-                }
             }
         }
 
         #[cfg(target_os = "windows")]
         {
-            use winreg::enums::*;
             use winreg::RegKey;
+            use winreg::enums::*;
 
             let hkcu = RegKey::predef(HKEY_CURRENT_USER);
             if let Ok(international) = hkcu.open_subkey("Control Panel\\International") {
@@ -165,7 +128,7 @@ fn main() -> Result<()> {
     }
 
     info!("Starting EpubSmith v{}", env!("CARGO_PKG_VERSION"));
-    info!("Input: {}", args.input.as_ref().unwrap().display());
+    info!("Input files: {:?}", args.input);
 
     // 开始总计时
     let total_start = std::time::Instant::now();
@@ -175,13 +138,13 @@ fn main() -> Result<()> {
     let spinner = ProgressBar::new_spinner();
     spinner.set_message(t!("processing-parsing-text"));
     spinner.enable_steady_tick(Duration::from_millis(120));
-    
+
     // 开始解析计时
     let parse_start = std::time::Instant::now();
-    let mut book = parse_txt(args.input.as_ref().unwrap(), &config)
-        .with_context(|| format!("Failed to parse input file: {}", args.input.as_ref().unwrap().display()))?;
+    let mut book =
+        parse_txt(&args.input, &config).with_context(|| "Failed to parse input files")?;
     let parse_duration = parse_start.elapsed();
-    
+
     spinner.finish_with_message(t!("success-text-parsed"));
 
     book.meta = config.merge_meta(&args, book.meta.title.as_str());
@@ -189,73 +152,103 @@ fn main() -> Result<()> {
     check_chapter_coherence(&book.chapters, &config.rules.chapter_number_extraction);
 
     if args.dry_run {
-        println!("{}", style(t!("title-detected-chapters")).bold());
+        // 使用输出工具打印章节列表
+        GLOBAL_OUTPUT.title(t!("title-detected-chapters"));
+        GLOBAL_OUTPUT.empty_line();
+
         for (i, chapter) in book.chapters.iter().enumerate() {
-            println!("[{:03}] {} (lines {}-{})
-", i + 1, chapter.title, chapter.start_line + 1, chapter.end_line + 1);
+            let line_range = format!("lines {}-{}", chapter.start_line + 1, chapter.end_line + 1);
+            let formatted = format!(
+                "[{:03}] {} ({})
+",
+                i + 1,
+                chapter.title,
+                line_range
+            );
+            GLOBAL_OUTPUT.info(formatted);
         }
-        
+
         // 打印计时信息
         if args.debug {
-            println!("\n{}", style("=== Performance Summary ===").bold());
-            println!("Text parsing: {:.2?}", parse_duration);
-            println!("Total time: {:.2?}", total_start.elapsed());
+            let metrics = [
+                ("Text parsing", parse_duration),
+                ("Total time", total_start.elapsed()),
+            ];
+            GLOBAL_OUTPUT.performance_summary("=== Performance Summary ===", &metrics);
         }
-        
+
         return Ok(());
     }
 
     if args.print_outline {
-        println!("{}", style(t!("title-chapter-outline")).bold());
+        // 使用输出工具打印章节大纲
+        GLOBAL_OUTPUT.title(t!("title-chapter-outline"));
+        GLOBAL_OUTPUT.empty_line();
+
         for (i, chapter) in book.chapters.iter().enumerate() {
-            println!("{}. {}", i + 1, chapter.title);
+            let formatted = format!("{}. {}", i + 1, chapter.title);
+            GLOBAL_OUTPUT.info(formatted);
         }
-        
+        GLOBAL_OUTPUT.empty_line();
+
         // 打印计时信息
         if args.debug {
-            println!("\n{}", style("=== Performance Summary ===").bold());
-            println!("Text parsing: {:.2?}", parse_duration);
-            println!("Total time: {:.2?}", total_start.elapsed());
+            let metrics = [
+                ("Text parsing", parse_duration),
+                ("Total time", total_start.elapsed()),
+            ];
+            GLOBAL_OUTPUT.performance_summary("=== Performance Summary ===", &metrics);
         }
-        
+
         return Ok(());
     }
 
     let spinner = ProgressBar::new_spinner();
     spinner.set_message(t!("processing-rendering-xhtml"));
     spinner.enable_steady_tick(Duration::from_millis(120));
-    
+
     // 开始渲染计时
     let render_start = std::time::Instant::now();
-    let xhtml_files = render_book(&book, &config)
-        .with_context(|| "Failed to render XHTML files")?;
+    let xhtml_files =
+        render_book(&book, &config).with_context(|| "Failed to render XHTML files")?;
     let render_duration = render_start.elapsed();
-    
+
     spinner.finish_with_message(t!("success-xhtml-rendered"));
 
     let spinner = ProgressBar::new_spinner();
     spinner.set_message(t!("processing-packaging-epub"));
     spinner.enable_steady_tick(Duration::from_millis(120));
-    
+
     // 开始打包计时
     let package_start = std::time::Instant::now();
     package_epub(&book, &xhtml_files, &config)
         .with_context(|| format!("Failed to package EPUB to: {}", config.output.display()))?;
     let package_duration = package_start.elapsed();
-    
+
     spinner.finish_with_message(t!("success-epub-packaged"));
 
-    println!("{}", style(t!("success-epub-generated")).green().bold());
-    println!("{} {}", t!("label-output"), style(config.output.display()).blue());
-    println!("{}", style(t!("info-total-chapters-processed", count = book.chapters.len())).cyan());
+    // 打印成功消息
+    GLOBAL_OUTPUT.success(t!("success-epub-generated"));
+    GLOBAL_OUTPUT.info(format!(
+        "{} {}",
+        t!("label-output"),
+        config.output.display()
+    ));
+    GLOBAL_OUTPUT.info(t!(
+        "info-total-chapters-processed",
+        count = book.chapters.len()
+    ));
+    GLOBAL_OUTPUT.empty_line();
 
     // 打印计时信息
     if args.debug {
-        println!("\n{}", style("=== Performance Summary ===").bold());
-        println!("Text parsing: {:.2?}", parse_duration);
-        println!("XHTML rendering: {:.2?}", render_duration);
-        println!("EPUB packaging: {:.2?}", package_duration);
-        println!("Total time: {:.2?}", total_start.elapsed());
+        let metrics = [
+            ("Text parsing", parse_duration),
+            ("XHTML rendering", render_duration),
+            ("EPUB packaging", package_duration),
+            ("Total time", total_start.elapsed()),
+        ];
+        GLOBAL_OUTPUT.performance_summary("=== Performance Summary ===", &metrics);
     }
 
     Ok(())

@@ -5,7 +5,7 @@ fn test_chinese_to_arabic() {
     // 直接调用二进制文件的函数可能比较复杂，我们可以测试正则表达式的功能
     // 测试中文数字提取
     let regex = Regex::new(r"^(?:第)?([一二三四五六七八九十0-9]+)[章节张卷]").unwrap();
-    
+
     assert!(regex.is_match("第1章"));
     assert!(regex.is_match("1章"));
     assert!(regex.is_match("第一章"));
@@ -17,7 +17,7 @@ fn test_chinese_to_arabic() {
 fn test_english_chapter_regex() {
     // 测试英文章节提取
     let regex = Regex::new(r"^Chapter\s+").unwrap();
-    
+
     assert!(regex.is_match("Chapter 1"));
     assert!(regex.is_match("Chapter Two"));
     assert!(regex.is_match("Chapter III"));
@@ -27,7 +27,7 @@ fn test_english_chapter_regex() {
 fn test_roman_chapter_regex() {
     // 测试罗马数字章节提取
     let regex = Regex::new(r"^Chapter\s+([IVXLCDMivxlcdm]+)").unwrap();
-    
+
     assert!(regex.is_match("Chapter I"));
     assert!(regex.is_match("Chapter II"));
     assert!(regex.is_match("Chapter III"));
@@ -38,7 +38,7 @@ fn test_roman_chapter_regex() {
 fn test_custom_rule_regex() {
     // 测试自定义规则章节提取
     let regex = Regex::new(r"^Episode ([0-9]+):").unwrap();
-    
+
     assert!(regex.is_match("Episode 1: The Beginning"));
     assert!(regex.is_match("Episode 2: The Journey"));
     assert!(regex.is_match("Episode 3: The End"));
@@ -52,7 +52,7 @@ fn test_chapter_regex_priority() {
         Regex::new(r"^Section\s+").unwrap(),
         Regex::new(r"^Part\s+").unwrap(),
     ];
-    
+
     // 应该匹配第一个正则表达式
     let title = "Chapter 1";
     let mut matched = false;

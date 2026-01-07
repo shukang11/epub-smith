@@ -1,6 +1,6 @@
-use assert_cmd::prelude::*;
+#![allow(deprecated)]
+use assert_cmd::Command;
 use predicates::prelude::*;
-use std::process::Command;
 use tempfile::NamedTempFile;
 
 #[test]
@@ -28,13 +28,13 @@ fn test_chinese_chapters() {
 这是尾声内容"#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--lang")
-       .arg("zh-CN")
-       .arg(temp_file.path());
-    
+        .arg("--lang")
+        .arg("zh-CN")
+        .arg(temp_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("章节号是递增的，符合要求"));
@@ -59,13 +59,13 @@ Section Two
 This is another section with written number."#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--lang")
-       .arg("en")
-       .arg(temp_file.path());
-    
+        .arg("--lang")
+        .arg("en")
+        .arg(temp_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Detected chapters:"));
@@ -90,13 +90,13 @@ Section II
 This is another section."#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--lang")
-       .arg("en")
-       .arg(temp_file.path());
-    
+        .arg("--lang")
+        .arg("en")
+        .arg(temp_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Detected chapters:"));
@@ -123,7 +123,7 @@ merge_lines = false
 trim_whitespace = true"#;
     let rules_file = NamedTempFile::new().unwrap();
     std::fs::write(rules_file.path(), rules_content).unwrap();
-    
+
     // 创建测试内容
     let content = r#"Episode 1: The Beginning
 This is the first episode in a custom format.
@@ -138,14 +138,14 @@ Special 1: Bonus Content
 This is bonus content."#;
     let content_file = NamedTempFile::new().unwrap();
     std::fs::write(content_file.path(), content).unwrap();
- let mut cmd = Command::cargo_bin("epub-smith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--lang")
-       .arg("en")
-       .arg("--rules")
-       .arg(rules_file.path())
-       .arg(content_file.path());
-    
+        .arg("--lang")
+        .arg("en")
+        .arg("--rules")
+        .arg(rules_file.path())
+        .arg(content_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Detected chapters:"));
@@ -167,13 +167,13 @@ fn test_discontinuous_chapters() {
 这是第四章"#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--lang")
-       .arg("zh-CN")
-       .arg(temp_file.path());
-    
+        .arg("--lang")
+        .arg("zh-CN")
+        .arg(temp_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("警告：章节号不是递增的"));
@@ -201,13 +201,13 @@ fn test_advanced_chapters() {
 这是第一卷的另一种写法"#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--lang")
-       .arg("en")
-       .arg(temp_file.path());
-    
+        .arg("--lang")
+        .arg("en")
+        .arg(temp_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Detected chapters:"));
@@ -218,13 +218,13 @@ fn test_empty_file() {
     // 测试空文件处理
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), "").unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--lang")
-       .arg("en")
-       .arg(temp_file.path());
-    
+        .arg("--lang")
+        .arg("en")
+        .arg(temp_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Detected chapters:"));
@@ -237,13 +237,13 @@ fn test_no_chapters_file() {
 It should be treated as a single chapter."#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--lang")
-       .arg("en")
-       .arg(temp_file.path());
-    
+        .arg("--lang")
+        .arg("en")
+        .arg(temp_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Detected chapters:"));
@@ -255,21 +255,20 @@ fn test_invalid_rules_file() {
     let content = "这不是一个有效的TOML文件";
     let rules_file = NamedTempFile::new().unwrap();
     std::fs::write(rules_file.path(), content).unwrap();
-    
+
     // 创建测试内容
     let test_content = r#"第1章
 这是第一章"#;
     let test_file = NamedTempFile::new().unwrap();
     std::fs::write(test_file.path(), test_content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--rules")
-       .arg(rules_file.path())
-       .arg(test_file.path());
-    
-    cmd.assert()
-        .failure();
+        .arg("--rules")
+        .arg(rules_file.path())
+        .arg(test_file.path());
+
+    cmd.assert().failure();
 }
 
 #[test]
@@ -285,21 +284,20 @@ merge_lines = false
 trim_whitespace = true"#;
     let rules_file = NamedTempFile::new().unwrap();
     std::fs::write(rules_file.path(), rules_content).unwrap();
-    
+
     // 创建测试内容
     let test_content = r#"第1章
 这是第一章"#;
     let test_file = NamedTempFile::new().unwrap();
     std::fs::write(test_file.path(), test_content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
-       .arg("--rules")
-       .arg(rules_file.path())
-       .arg(test_file.path());
-    
-    cmd.assert()
-        .failure();
+        .arg("--rules")
+        .arg(rules_file.path())
+        .arg(test_file.path());
+
+    cmd.assert().failure();
 }
 
 #[test]
@@ -315,13 +313,13 @@ fn test_print_outline() {
 这是第三章"#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--print-outline")
-       .arg("--lang")
-       .arg("en")
-       .arg(temp_file.path());
-    
+        .arg("--lang")
+        .arg("en")
+        .arg(temp_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Chapter outline:"));
@@ -337,16 +335,15 @@ fn test_verbose_mode() {
 这是第二章"#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("-v")
-       .arg("--dry-run")
-       .arg("--lang")
-       .arg("en")
-       .arg(temp_file.path());
-    
-    cmd.assert()
-        .success();
+        .arg("--dry-run")
+        .arg("--lang")
+        .arg("en")
+        .arg(temp_file.path());
+
+    cmd.assert().success();
 }
 
 #[test]
@@ -359,14 +356,14 @@ fn test_explain_mode() {
 这是第二章"#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--explain")
-       .arg("--dry-run")
-       .arg("--lang")
-       .arg("zh-CN")
-       .arg(temp_file.path());
-    
+        .arg("--dry-run")
+        .arg("--lang")
+        .arg("zh-CN")
+        .arg(temp_file.path());
+
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("使用的章节正则表达式："));
