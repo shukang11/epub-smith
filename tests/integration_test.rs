@@ -29,7 +29,7 @@ fn test_chinese_chapters() {
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--lang")
        .arg("zh-CN")
@@ -60,7 +60,7 @@ This is another section with written number."#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--lang")
        .arg("en")
@@ -91,7 +91,7 @@ This is another section."#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--lang")
        .arg("en")
@@ -138,7 +138,7 @@ Special 1: Bonus Content
 This is bonus content."#;
     let content_file = NamedTempFile::new().unwrap();
     std::fs::write(content_file.path(), content).unwrap();
- let mut cmd = Command::cargo_bin("booksmith").unwrap();
+ let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--lang")
        .arg("en")
@@ -168,7 +168,7 @@ fn test_discontinuous_chapters() {
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--lang")
        .arg("zh-CN")
@@ -202,7 +202,7 @@ fn test_advanced_chapters() {
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--lang")
        .arg("en")
@@ -219,7 +219,7 @@ fn test_empty_file() {
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), "").unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--lang")
        .arg("en")
@@ -238,7 +238,7 @@ It should be treated as a single chapter."#;
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--lang")
        .arg("en")
@@ -262,7 +262,7 @@ fn test_invalid_rules_file() {
     let test_file = NamedTempFile::new().unwrap();
     std::fs::write(test_file.path(), test_content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--rules")
        .arg(rules_file.path())
@@ -292,7 +292,7 @@ trim_whitespace = true"#;
     let test_file = NamedTempFile::new().unwrap();
     std::fs::write(test_file.path(), test_content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--dry-run")
        .arg("--rules")
        .arg(rules_file.path())
@@ -316,7 +316,7 @@ fn test_print_outline() {
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--print-outline")
        .arg("--lang")
        .arg("en")
@@ -338,7 +338,7 @@ fn test_verbose_mode() {
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("-v")
        .arg("--dry-run")
        .arg("--lang")
@@ -360,7 +360,7 @@ fn test_explain_mode() {
     let temp_file = NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
     
-    let mut cmd = Command::cargo_bin("booksmith").unwrap();
+    let mut cmd = Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("--explain")
        .arg("--dry-run")
        .arg("--lang")

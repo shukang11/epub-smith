@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
-use booksmith::{renderer, models::{Book, Chapter, Meta, Rules}, config::Config};
+use epub_smith::{renderer, models::{Book, Chapter, Meta, Rules}, config::Config};
 
 #[test]
 fn test_render_mimetype() {

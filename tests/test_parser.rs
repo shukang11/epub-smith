@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use anyhow::Result;
-use booksmith::{parser::parse_txt, config::Config, cli::Args};
+use epub_smith::{parser::parse_txt, config::Config, cli::Args};
 use tempfile::NamedTempFile;
 
 #[test]
@@ -41,6 +41,7 @@ fn test_parse_txt() -> Result<()> {
         language: "zh-CN".to_string(),
         check: false,
         verbose: false,
+        debug: false,
         lang: None,
         export_template: None,
         style: None,
@@ -110,6 +111,7 @@ fn test_parse_txt_with_broken_html() -> Result<()> {
         language: "zh-CN".to_string(),
         check: false,
         verbose: false,
+        debug: false,
         lang: None,
         export_template: None,
         style: None,

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use tempfile::{tempdir, NamedTempFile};
-use booksmith::{packager, models::{Book, Meta, Rules}, config::Config};
+use epub_smith::{packager, models::{Book, Meta, Rules}, config::Config};
 
 #[test]
 fn test_add_mimetype() {

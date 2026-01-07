@@ -1,5 +1,5 @@
-use booksmith::{convert_chinese_to_arabic, convert_english_to_arabic, convert_roman_to_arabic, convert_number, extract_chapter_number};
-use booksmith::models::{ChapterNumberExtraction, ChapterNumberRule};
+use epub_smith::{convert_chinese_to_arabic, convert_english_to_arabic, convert_roman_to_arabic, convert_number, extract_chapter_number};
+use epub_smith::models::{ChapterNumberExtraction, ChapterNumberRule};
 
 #[test]
 fn test_chinese_number_conversion() {
