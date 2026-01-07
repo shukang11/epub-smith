@@ -11,7 +11,7 @@ pub struct Output {
 impl Default for Output {
      fn default() -> Self {
          Self {
-            term: Term::stderr(),
+            term: Term::stdout(),
             is_stderr: false,
         }
      }
@@ -22,6 +22,7 @@ impl Output {
     pub fn new_stderr() -> Self {
         Self {
             term: Term::stderr(),
+            // 标记此输出实例是否写入标准错误流
             is_stderr: true,
         }
     }

@@ -33,32 +33,72 @@ sequenceDiagram
 
 ## 交互流程
 
-### 5.1 基本转换流程
+### 5.1 子命令处理流程
 
 ```mermaid
 flowchart TD
     A[用户执行命令] --> B[解析命令行参数]
+    B --> C{子命令类型?}
+    
+    C -->|convert| D[处理转换命令]
+    C -->|preview-dry-run| E[处理预览详情命令]
+    C -->|preview-outline| F[处理大纲预览命令]
+    C -->|snapshot-save| G[处理快照保存命令]
+    C -->|snapshot-load| H[处理快照加载命令]
+    C -->|template-export| I[处理模板导出命令]
+    
+    D --> J[加载配置和规则]
+    E --> J
+    F --> J
+    G --> J
+    H --> J
+    
+    J -->|convert| K[解析输入文件]
+    J -->|preview-dry-run| K
+    J -->|preview-outline| K
+    J -->|snapshot-save| K
+    J -->|snapshot-load| L[加载快照文件]
+    J -->|template-export| M[导出模板文件]
+    
+    K -->|convert| N[渲染XHTML]
+    K -->|preview-dry-run| O[显示详细章节结构]
+    K -->|preview-outline| P[输出章节大纲]
+    K -->|snapshot-save| Q[保存章节快照]
+    
+    N --> R[打包EPUB]
+    R --> S{--check?}
+    S -->|是| T[执行EPUB校验]
+    S -->|否| U[完成转换]
+    T --> U
+    
+    L --> N
+    M --> V[结束]
+    O --> V
+    P --> V
+    Q --> V
+    U --> V
+```
+
+### 5.2 转换子命令详细流程
+
+```mermaid
+flowchart TD
+    A[开始转换流程] --> B[加载配置和规则]
     B --> C{规则文件存在?}
     C -->|是| D[加载规则文件]
     C -->|否| E[使用默认规则]
     D --> F[解析输入文件]
     E --> F
-    F --> G{--dry-run?}
-    G -->|是| H[显示章节结构]
-    G -->|否| I{--print-outline?}
-    I -->|是| J[输出章节大纲]
-    I -->|否| K[渲染XHTML]
-    K --> L[打包EPUB]
-    L --> M{--check?}
-    M -->|是| N[执行EPUB校验]
-    M -->|否| O[完成转换]
-    N --> O
-    H --> P[结束]
-    J --> P
-    O --> P
+    F --> G[渲染XHTML]
+    G --> H[打包EPUB]
+    H --> I{--check?}
+    I -->|是| J[执行EPUB校验]
+    I -->|否| K[完成转换]
+    J --> K
+    K --> L[输出结果]
 ```
 
-### 5.2 规则文件加载流程
+### 5.3 规则文件加载流程
 
 ```mermaid
 flowchart TD
@@ -73,7 +113,7 @@ flowchart TD
     H --> I
 ```
 
-### 5.3 编码处理流程
+### 5.4 编码处理流程
 
 ```mermaid
 flowchart TD
@@ -90,7 +130,7 @@ flowchart TD
     I --> J[返回解码后的文本]
 ```
 
-### 5.4 章节解析流程
+### 5.5 章节解析流程
 
 ```mermaid
 flowchart TD

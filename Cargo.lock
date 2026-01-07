@@ -448,7 +448,7 @@ dependencies = [
 
 [[package]]
 name = "epub-smith"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -465,6 +465,7 @@ dependencies = [
  "regex",
  "rust-i18n",
  "serde",
+ "serde_json",
  "slug",
  "tempfile",
  "tera",

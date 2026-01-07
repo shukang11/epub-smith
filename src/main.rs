@@ -13,7 +13,7 @@ use rust_i18n::t;
 use epub_smith::output::GLOBAL_OUTPUT;
 use epub_smith::utils::coherence::check_chapter_coherence;
 use epub_smith::{
-    cli::Args, config::Config, export::export_template, packager::package_epub, parser::parse_txt,
+    cli::{Args, Commands, ConvertArgs, TemplateCommands, SnapshotCommands, PreviewCommands}, config::Config, export::export_template, packager::package_epub, parser::parse_txt,
     renderer::render_book,
 };
 
@@ -34,10 +34,6 @@ fn main() -> Result<()> {
         .apply()?;
 
     let args = Args::parse();
-
-    if let Some(ref export_dir) = args.export_template {
-        return export_template(export_dir);
-    }
 
     let lang = args.lang.as_deref().unwrap_or_default();
     if !lang.is_empty() {
@@ -127,13 +123,47 @@ fn main() -> Result<()> {
         }
     }
 
+    match args.command {
+        Commands::Convert(convert_args) => {
+            handle_convert_command(convert_args, args.debug)?;
+        }
+        Commands::Template(TemplateCommands::Export { directory }) => {
+            export_template(&directory)?;
+        }
+        Commands::Snapshot(SnapshotCommands::Save(snapshot_args)) => {
+            handle_snapshot_save_command(snapshot_args.input, snapshot_args.rules, snapshot_args.output, args.debug)?;
+        }
+        Commands::Snapshot(SnapshotCommands::Load(snapshot_args)) => {
+            handle_snapshot_load_command(snapshot_args.file, snapshot_args.output, snapshot_args.rules, snapshot_args.author, snapshot_args.title, snapshot_args.language, snapshot_args.check, snapshot_args.style, args.debug)?;
+        }
+        Commands::Preview(PreviewCommands::Outline(preview_args)) => {
+            handle_preview_outline_command(preview_args.input, preview_args.rules, args.debug)?;
+        }
+        Commands::Preview(PreviewCommands::DryRun(preview_args)) => {
+            handle_preview_dryrun_command(preview_args.input, preview_args.rules, args.debug)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// 处理 convert 命令
+fn handle_convert_command(args: ConvertArgs, debug: bool) -> Result<()> {
     info!("Starting EpubSmith v{}", env!("CARGO_PKG_VERSION"));
     info!("Input files: {:?}", args.input);
+
+    // 检查是否使用了标准输入
+    let use_stdin = !args.input.is_empty() && args.input[0].to_string_lossy() == "-";
+    
+    // 确保有输入文件
+    if args.input.is_empty() && !use_stdin {
+        anyhow::bail!("No input files provided");
+    }
 
     // 开始总计时
     let total_start = std::time::Instant::now();
 
-    let config = Config::from_args(&args)?;
+    let config = Config::from_convert_args(&args)?;
 
     let spinner = ProgressBar::new_spinner();
     spinner.set_message(t!("processing-parsing-text"));
@@ -141,7 +171,7 @@ fn main() -> Result<()> {
 
     // 开始解析计时
     let parse_start = std::time::Instant::now();
-    let mut book =
+    let mut book = 
         parse_txt(&args.input, &config).with_context(|| "Failed to parse input files")?;
     let parse_duration = parse_start.elapsed();
 
@@ -151,65 +181,211 @@ fn main() -> Result<()> {
 
     check_chapter_coherence(&book.chapters, &config.rules.chapter_number_extraction);
 
-    if args.dry_run {
-        // 使用输出工具打印章节列表
-        GLOBAL_OUTPUT.title(t!("title-detected-chapters"));
-        GLOBAL_OUTPUT.empty_line();
+    // 继续渲染和打包EPUB
+    goto_render_and_package(book, config, total_start, debug)?;
 
-        for (i, chapter) in book.chapters.iter().enumerate() {
-            let line_range = format!("lines {}-{}", chapter.start_line + 1, chapter.end_line + 1);
-            let formatted = format!(
-                "[{:03}] {} ({})
-",
-                i + 1,
-                chapter.title,
-                line_range
-            );
-            GLOBAL_OUTPUT.info(formatted);
-        }
+    Ok(())
+}
 
-        // 打印计时信息
-        if args.debug {
-            let metrics = [
-                ("Text parsing", parse_duration),
-                ("Total time", total_start.elapsed()),
-            ];
-            GLOBAL_OUTPUT.performance_summary("=== Performance Summary ===", &metrics);
-        }
-
-        return Ok(());
+/// 处理 snapshot save 命令
+fn handle_snapshot_save_command(input: Vec<std::path::PathBuf>, rules: Option<std::path::PathBuf>, output: std::path::PathBuf, debug: bool) -> Result<()> {
+    // 检查是否使用了标准输入
+    let use_stdin = !input.is_empty() && input[0].to_string_lossy() == "-";
+    
+    // 确保有输入文件
+    if input.is_empty() && !use_stdin {
+        anyhow::bail!("No input files provided");
     }
 
-    if args.print_outline {
-        // 使用输出工具打印章节大纲
-        GLOBAL_OUTPUT.title(t!("title-chapter-outline"));
-        GLOBAL_OUTPUT.empty_line();
+    // 开始总计时
+    let total_start = std::time::Instant::now();
 
-        for (i, chapter) in book.chapters.iter().enumerate() {
-            let formatted = format!("{}. {}", i + 1, chapter.title);
-            GLOBAL_OUTPUT.info(formatted);
-        }
-        GLOBAL_OUTPUT.empty_line();
+    let config = Config::from_snapshot_save_args(&input, rules)?;
 
-        // 打印计时信息
-        if args.debug {
-            let metrics = [
-                ("Text parsing", parse_duration),
-                ("Total time", total_start.elapsed()),
-            ];
-            GLOBAL_OUTPUT.performance_summary("=== Performance Summary ===", &metrics);
-        }
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_message(t!("processing-parsing-text"));
+    spinner.enable_steady_tick(Duration::from_millis(120));
 
-        return Ok(());
+    // 开始解析计时
+    let parse_start = std::time::Instant::now();
+    let mut book = 
+        parse_txt(&input, &config).with_context(|| "Failed to parse input files")?;
+    let parse_duration = parse_start.elapsed();
+
+    spinner.finish_with_message(t!("success-text-parsed"));
+
+    book.meta = config.merge_snapshot_meta(book.meta.title.as_str());
+
+    check_chapter_coherence(&book.chapters, &config.rules.chapter_number_extraction);
+
+    // 将book结构序列化为JSON并写入文件
+    let snapshot_content = serde_json::to_string_pretty(&book)?;
+    std::fs::write(&output, snapshot_content)
+        .with_context(|| format!("Failed to write snapshot to: {}", output.display()))?;
+    GLOBAL_OUTPUT.success(format!("Snapshot exported to: {}", output.display()));
+
+    // 打印计时信息
+    if debug {
+        let metrics = [
+            ("Text parsing", parse_duration),
+            ("Total time", total_start.elapsed()),
+        ];
+        GLOBAL_OUTPUT.performance_summary("=== Performance Summary ===", &metrics);
     }
 
+    Ok(())
+}
+
+/// 处理 snapshot load 命令
+fn handle_snapshot_load_command(file: std::path::PathBuf, output: std::path::PathBuf, rules: Option<std::path::PathBuf>, author: Option<String>, title: Option<String>, language: String, check: bool, style: Option<std::path::PathBuf>, debug: bool) -> Result<()> {
+    // 开始总计时
+    let total_start = std::time::Instant::now();
+    let config = Config::from_snapshot_load_args(output, rules, check, style)?;
+
+    // 读取并解析快照文件
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_message("Reading snapshot file...");
+    spinner.enable_steady_tick(Duration::from_millis(120));
+
+    let snapshot_content = std::fs::read_to_string(&file)
+        .with_context(|| format!("Failed to read snapshot from: {}", file.display()))?;
+    let mut book: epub_smith::models::Book = serde_json::from_str(&snapshot_content)
+        .with_context(|| format!("Failed to parse snapshot from: {}", file.display()))?;
+
+    spinner.finish_with_message("Snapshot loaded successfully");
+    
+    // 更新元数据
+    book.meta = config.merge_snapshot_load_meta(title.as_deref(), author.as_deref(), language.as_str(), book.meta.title.as_str());
+
+    // 跳过快照导入时的章节连贯性检查，因为快照是手动调整过的
+    info!("Skipping chapter coherence check for snapshot input");
+
+    // 继续渲染和打包EPUB
+    goto_render_and_package(book, config, total_start, debug)?;
+    Ok(())
+}
+
+/// 处理 preview outline 命令
+fn handle_preview_outline_command(input: Vec<std::path::PathBuf>, rules: Option<std::path::PathBuf>, debug: bool) -> Result<()> {
+    // 检查是否使用了标准输入
+    let use_stdin = !input.is_empty() && input[0].to_string_lossy() == "-";
+    
+    // 确保有输入文件
+    if input.is_empty() && !use_stdin {
+        anyhow::bail!("No input files provided");
+    }
+
+    // 开始总计时
+    let total_start = std::time::Instant::now();
+
+    let config = Config::from_preview_args(rules)?;
+
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_message(t!("processing-parsing-text"));
+    spinner.enable_steady_tick(Duration::from_millis(120));
+
+    // 开始解析计时
+    let parse_start = std::time::Instant::now();
+    let mut book = 
+        parse_txt(&input, &config).with_context(|| "Failed to parse input files")?;
+    let parse_duration = parse_start.elapsed();
+
+    spinner.finish_with_message(t!("success-text-parsed"));
+
+    book.meta = config.merge_preview_meta(book.meta.title.as_str());
+
+    check_chapter_coherence(&book.chapters, &config.rules.chapter_number_extraction);
+
+    // 使用输出工具打印章节大纲
+    GLOBAL_OUTPUT.title(t!("title-chapter-outline"));
+    GLOBAL_OUTPUT.empty_line();
+
+    for (i, chapter) in book.chapters.iter().enumerate() {
+        let formatted = format!("{}. {}", i + 1, chapter.title);
+        GLOBAL_OUTPUT.info(formatted);
+    }
+    GLOBAL_OUTPUT.empty_line();
+
+    // 打印计时信息
+    if debug {
+        let metrics = [
+            ("Text parsing", parse_duration),
+            ("Total time", total_start.elapsed()),
+        ];
+        GLOBAL_OUTPUT.performance_summary("=== Performance Summary ===", &metrics);
+    }
+
+    Ok(())
+}
+
+/// 处理 preview dryrun 命令
+fn handle_preview_dryrun_command(input: Vec<std::path::PathBuf>, rules: Option<std::path::PathBuf>, debug: bool) -> Result<()> {
+    // 检查是否使用了标准输入
+    let use_stdin = !input.is_empty() && input[0].to_string_lossy() == "-";
+    
+    // 确保有输入文件
+    if input.is_empty() && !use_stdin {
+        anyhow::bail!("No input files provided");
+    }
+
+    // 开始总计时
+    let total_start = std::time::Instant::now();
+
+    let config = Config::from_preview_args(rules)?;
+
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_message(t!("processing-parsing-text"));
+    spinner.enable_steady_tick(Duration::from_millis(120));
+
+    // 开始解析计时
+    let parse_start = std::time::Instant::now();
+    let mut book = 
+        parse_txt(&input, &config).with_context(|| "Failed to parse input files")?;
+    let parse_duration = parse_start.elapsed();
+
+    spinner.finish_with_message(t!("success-text-parsed"));
+
+    book.meta = config.merge_preview_meta(book.meta.title.as_str());
+
+    check_chapter_coherence(&book.chapters, &config.rules.chapter_number_extraction);
+
+    // 使用输出工具打印章节列表
+    GLOBAL_OUTPUT.title(t!("title-detected-chapters"));
+    GLOBAL_OUTPUT.empty_line();
+
+    for (i, chapter) in book.chapters.iter().enumerate() {
+        let line_range = format!("lines {}-{}", chapter.start_line + 1, chapter.end_line + 1);
+        let formatted = format!(
+            "[{:03}] {} ({})\n",
+            i + 1,
+            chapter.title,
+            line_range
+        );
+        GLOBAL_OUTPUT.info(formatted);
+    }
+
+    // 打印计时信息
+    if debug {
+        let metrics = [
+            ("Text parsing", parse_duration),
+            ("Total time", total_start.elapsed()),
+        ];
+        GLOBAL_OUTPUT.performance_summary("=== Performance Summary ===", &metrics);
+    }
+
+    Ok(())
+}
+
+/// 渲染和打包EPUB的通用函数
+fn goto_render_and_package(book: epub_smith::models::Book, config: epub_smith::config::Config, total_start: std::time::Instant, debug: bool) -> Result<()>
+{
+    // 开始渲染计时
+    let render_start = std::time::Instant::now();
     let spinner = ProgressBar::new_spinner();
     spinner.set_message(t!("processing-rendering-xhtml"));
     spinner.enable_steady_tick(Duration::from_millis(120));
-
-    // 开始渲染计时
-    let render_start = std::time::Instant::now();
-    let xhtml_files =
+    
+    let xhtml_files = 
         render_book(&book, &config).with_context(|| "Failed to render XHTML files")?;
     let render_duration = render_start.elapsed();
 
@@ -241,9 +417,8 @@ fn main() -> Result<()> {
     GLOBAL_OUTPUT.empty_line();
 
     // 打印计时信息
-    if args.debug {
+    if debug {
         let metrics = [
-            ("Text parsing", parse_duration),
             ("XHTML rendering", render_duration),
             ("EPUB packaging", package_duration),
             ("Total time", total_start.elapsed()),

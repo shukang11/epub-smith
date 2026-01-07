@@ -1,5 +1,5 @@
 use anyhow::Result;
-use epub_smith::{cli::Args, config::Config, parser::parse_txt};
+use epub_smith::{config::Config, parser::parse_txt};
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
@@ -26,28 +26,19 @@ fn test_parse_txt() -> Result<()> {
     std::fs::write(temp_file.path(), content)?;
     let input = temp_file.path().to_owned();
 
-    // Create default args and config
-    let args = Args {
+    // Create default config directly without Args
+    let config = Config::from_convert_args(&epub_smith::cli::ConvertArgs {
         input: vec![input.clone()],
         rules: None,
         output: PathBuf::from("output.epub"),
         encoding: None,
-        dry_run: false,
-        print_outline: false,
-        explain: false,
         title: None,
         author: None,
         cover: None,
         language: "zh-CN".to_string(),
         check: false,
-        verbose: false,
-        debug: false,
-        lang: None,
-        export_template: None,
         style: None,
-    };
-
-    let config = Config::from_args(&args)?;
+    })?;
 
     // Parse the file
     let book = parse_txt(&[input], &config)?;
@@ -95,8 +86,8 @@ fn test_parse_multiple_txt_files() -> Result<()> {
     std::fs::write(temp_file4.path(), content4)?;
     let input4 = temp_file4.path().to_owned();
 
-    // Create default args and config
-    let args = Args {
+    // Create default config directly without Args
+    let config = Config::from_convert_args(&epub_smith::cli::ConvertArgs {
         input: vec![
             input1.clone(),
             input2.clone(),
@@ -106,22 +97,13 @@ fn test_parse_multiple_txt_files() -> Result<()> {
         rules: None,
         output: PathBuf::from("output.epub"),
         encoding: None,
-        dry_run: false,
-        print_outline: false,
-        explain: false,
         title: None,
         author: None,
         cover: None,
         language: "zh-CN".to_string(),
         check: false,
-        verbose: false,
-        debug: false,
-        lang: None,
-        export_template: None,
         style: None,
-    };
-
-    let config = Config::from_args(&args)?;
+    })?;
 
     // Parse the files
     let inputs = vec![input1, input2, input3, input4];
@@ -183,28 +165,19 @@ fn test_parse_txt_with_broken_html() -> Result<()> {
     std::fs::write(temp_file.path(), content)?;
     let input = temp_file.path().to_owned();
 
-    // Create default args and config
-    let args = Args {
+    // Create default config directly without Args
+    let config = Config::from_convert_args(&epub_smith::cli::ConvertArgs {
         input: vec![input.clone()],
         rules: None,
         output: PathBuf::from("output.epub"),
         encoding: None,
-        dry_run: false,
-        print_outline: false,
-        explain: false,
         title: None,
         author: None,
         cover: None,
         language: "zh-CN".to_string(),
         check: false,
-        verbose: false,
-        debug: false,
-        lang: None,
-        export_template: None,
         style: None,
-    };
-
-    let config = Config::from_args(&args)?;
+    })?;
 
     // Parse the file
     let book = parse_txt(&[input], &config)?;

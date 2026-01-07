@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use toml::from_str;
 
 use crate::{
-    cli::{Args, DEFAULT_OUTPUT_FILENAME},
+    cli::{Args, ConvertArgs, DEFAULT_OUTPUT_FILENAME},
     models::{Meta, Rules},
 };
 
@@ -25,8 +25,8 @@ pub struct Config {
 }
 
 impl Config {
-    /// 从命令行参数创建配置
-    pub fn from_args(args: &Args) -> Result<Self> {
+    /// 从 convert 命令参数创建配置
+    pub fn from_convert_args(args: &ConvertArgs) -> Result<Self> {
         // 加载规则文件或使用默认规则
         let rules = if let Some(rules_path) = &args.rules {
             Config::load_rules(rules_path)?
@@ -70,9 +70,80 @@ impl Config {
             rules,
             output,
             check: args.check,
-            explain: args.explain,
+            explain: false, // convert命令中移除了explain选项
             encoding: args.encoding.clone(),
             style: args.style.clone(),
+        })
+    }
+
+    /// 从 snapshot save 命令参数创建配置
+    pub fn from_snapshot_save_args(input: &[PathBuf], rules: Option<PathBuf>) -> Result<Self> {
+        // 加载规则文件或使用默认规则
+        let rules = if let Some(rules_path) = rules {
+            Config::load_rules(&rules_path)?
+        } else {
+            Rules::default()
+        };
+
+        Ok(Self {
+            rules,
+            output: PathBuf::from(DEFAULT_OUTPUT_FILENAME), // 快照保存时输出路径不相关
+            check: false,
+            explain: false,
+            encoding: None,
+            style: None,
+        })
+    }
+
+    /// 从 snapshot load 命令参数创建配置
+    pub fn from_snapshot_load_args(output: PathBuf, rules: Option<PathBuf>, check: bool, style: Option<PathBuf>) -> Result<Self> {
+        // 加载规则文件或使用默认规则
+        let rules = if let Some(rules_path) = rules {
+            Config::load_rules(&rules_path)?
+        } else {
+            Rules::default()
+        };
+
+        Ok(Self {
+            rules,
+            output,
+            check,
+            explain: false,
+            encoding: None,
+            style,
+        })
+    }
+
+    /// 从 preview 命令参数创建配置
+    pub fn from_preview_args(rules: Option<PathBuf>) -> Result<Self> {
+        // 加载规则文件或使用默认规则
+        let rules = if let Some(rules_path) = rules {
+            Config::load_rules(&rules_path)?
+        } else {
+            Rules::default()
+        };
+
+        Ok(Self {
+            rules,
+            output: PathBuf::from(DEFAULT_OUTPUT_FILENAME), // 预览时输出路径不相关
+            check: false,
+            explain: false,
+            encoding: None,
+            style: None,
+        })
+    }
+
+    /// 从命令行参数创建配置（用于向后兼容，现在主要用于处理默认命令）
+    pub fn from_args(args: &Args) -> Result<Self> {
+        // 这个方法现在主要用于处理默认命令，实际功能已被其他方法替代
+        // 这里简化实现，因为默认命令现在会显示帮助信息
+        Ok(Self {
+            rules: Rules::default(),
+            output: PathBuf::from(DEFAULT_OUTPUT_FILENAME),
+            check: false,
+            explain: false,
+            encoding: None,
+            style: None,
         })
     }
 
@@ -87,8 +158,8 @@ impl Config {
         Ok(rules)
     }
 
-    /// 合并命令行参数和规则文件中的元数据
-    pub fn merge_meta(&self, args: &Args, default_title: &str) -> Meta {
+    /// 合并 convert 命令的元数据
+    pub fn merge_meta(&self, args: &ConvertArgs, default_title: &str) -> Meta {
         // 从规则文件获取元数据，如果不存在则使用默认值
         let mut meta = self.rules.meta.clone().unwrap_or_default();
 
@@ -112,6 +183,102 @@ impl Config {
 
         if let Some(cover) = &args.cover {
             meta.cover = Some(cover.clone());
+        }
+
+        // 如果没有提供标识符，生成一个新的UUID
+        if meta.identifier.is_empty() {
+            meta.identifier = format!("urn:uuid:{}", uuid::Uuid::new_v4());
+        }
+
+        // 设置修改时间为当前时间
+        meta.modified = chrono::Utc::now().to_rfc3339();
+
+        meta
+    }
+
+    /// 合并 snapshot save 命令的元数据
+    pub fn merge_snapshot_meta(&self, default_title: &str) -> Meta {
+        // 从规则文件获取元数据，如果不存在则使用默认值
+        let mut meta = self.rules.meta.clone().unwrap_or_default();
+
+        // 使用默认标题
+        if meta.title.is_empty() || meta.title == "Untitled" {
+            meta.title = default_title.to_string();
+        }
+
+        // 设置默认作者
+        if meta.author.is_empty() {
+            meta.author = "Unknown".to_string();
+        }
+
+        // 设置默认语言
+        if meta.language.is_empty() {
+            meta.language = "zh-CN".to_string();
+        }
+
+        // 如果没有提供标识符，生成一个新的UUID
+        if meta.identifier.is_empty() {
+            meta.identifier = format!("urn:uuid:{}", uuid::Uuid::new_v4());
+        }
+
+        // 设置修改时间为当前时间
+        meta.modified = chrono::Utc::now().to_rfc3339();
+
+        meta
+    }
+
+    /// 合并 snapshot load 命令的元数据
+    pub fn merge_snapshot_load_meta(&self, title: Option<&str>, author: Option<&str>, language: &str, default_title: &str) -> Meta {
+        // 从规则文件获取元数据，如果不存在则使用默认值
+        let mut meta = self.rules.meta.clone().unwrap_or_default();
+
+        // 使用命令行参数覆盖元数据
+        if let Some(title) = title {
+            meta.title = title.to_string();
+        } else if meta.title.is_empty() || meta.title == "Untitled" {
+            // 如果标题为空或为默认的"Untitled"，则使用传入的default_title
+            meta.title = default_title.to_string();
+        }
+
+        if let Some(author) = author {
+            meta.author = author.to_string();
+        } else if meta.author.is_empty() {
+            meta.author = "Unknown".to_string();
+        }
+
+        if meta.language.is_empty() {
+            meta.language = language.to_string();
+        }
+
+        // 如果没有提供标识符，生成一个新的UUID
+        if meta.identifier.is_empty() {
+            meta.identifier = format!("urn:uuid:{}", uuid::Uuid::new_v4());
+        }
+
+        // 设置修改时间为当前时间
+        meta.modified = chrono::Utc::now().to_rfc3339();
+
+        meta
+    }
+
+    /// 合并 preview 命令的元数据
+    pub fn merge_preview_meta(&self, default_title: &str) -> Meta {
+        // 从规则文件获取元数据，如果不存在则使用默认值
+        let mut meta = self.rules.meta.clone().unwrap_or_default();
+
+        // 使用默认标题
+        if meta.title.is_empty() || meta.title == "Untitled" {
+            meta.title = default_title.to_string();
+        }
+
+        // 设置默认作者
+        if meta.author.is_empty() {
+            meta.author = "Unknown".to_string();
+        }
+
+        // 设置默认语言
+        if meta.language.is_empty() {
+            meta.language = "zh-CN".to_string();
         }
 
         // 如果没有提供标识符，生成一个新的UUID
