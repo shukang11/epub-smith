@@ -125,7 +125,7 @@ fn create_chapter(
         if args.debug {
             // 使用thread_local存储计时信息
             thread_local! {
-                static CREATE_CHAPTER_TIMES: std::cell::RefCell<(u128, u128)> = std::cell::RefCell::new((0, 0));
+                static CREATE_CHAPTER_TIMES: std::cell::RefCell<(u128, u128)> = const { std::cell::RefCell::new((0, 0)) };
             }
             
             CREATE_CHAPTER_TIMES.with(|times| {

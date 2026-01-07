@@ -32,18 +32,24 @@ impl Config {
         };
 
         // 如果输出路径是默认值，且输入是文件，使用输入文件名作为输出文件名（替换扩展名）
-        let output = if args.output == PathBuf::from(DEFAULT_OUTPUT_FILENAME) && args.input.is_some() && args.input.as_ref().unwrap().is_file() {
-            // 获取输入文件名，替换扩展名为.epub
-            let input_filename = args.input.as_ref().unwrap().file_name()
-                .and_then(|os_str| os_str.to_str())
-                .ok_or_else(|| anyhow::anyhow!("Failed to get filename from input path: {}", args.input.as_ref().unwrap().display()))?;
-            
-            let output_filename = if let Some((name, _)) = input_filename.rsplit_once('.') {
-                format!("{}.epub", name)
+        let output = if let Some(input_path) = &args.input {
+            // 检查输出路径是否是默认值
+            let output_str = args.output.to_str().unwrap_or_default();
+            if output_str == DEFAULT_OUTPUT_FILENAME && input_path.is_file() {
+                // 获取输入文件名，替换扩展名为.epub
+                let input_filename = input_path.file_name()
+                    .and_then(|os_str| os_str.to_str())
+                    .ok_or_else(|| anyhow::anyhow!("Failed to get filename from input path: {}", input_path.display()))?;
+                
+                let output_filename = if let Some((name, _)) = input_filename.rsplit_once('.') {
+                    format!("{}.epub", name)
+                } else {
+                    format!("{}.epub", input_filename)
+                };
+                PathBuf::from(output_filename)
             } else {
-                format!("{}.epub", input_filename)
-            };
-            PathBuf::from(output_filename)
+                args.output.clone()
+            }
         } else {
             args.output.clone()
         };

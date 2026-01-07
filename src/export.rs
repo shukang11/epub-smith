@@ -34,7 +34,6 @@ pub fn export_template(export_dir: &PathBuf) -> Result<()> {
     println!("{}", t!("export-template-css"));
     println!("{}", t!("export-template-preview"));
     println!("{}", t!("export-template-readme"));
-    println!("");
     println!("{} {}", t!("label-output"), style(export_dir.display()).blue());
 
     Ok(())

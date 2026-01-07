@@ -61,7 +61,7 @@ pub fn convert_chinese_to_arabic(chinese_num: &str) -> Option<usize> {
     
     for c in chinese_num.chars() {
         // 处理基本数字
-        if let Some((_, num)) = basic_map.iter().find(|(word, _)| word.chars().next() == Some(c)) {
+        if let Some((_, num)) = basic_map.iter().find(|(word, _)| word.starts_with(c)) {
             temp = *num;
         } 
         // 处理零
@@ -70,7 +70,7 @@ pub fn convert_chinese_to_arabic(chinese_num: &str) -> Option<usize> {
             continue;
         } 
         // 处理单位
-        else if let Some((_, unit)) = unit_map.iter().find(|(word, _)| word.chars().next() == Some(c)) {
+        else if let Some((_, unit)) = unit_map.iter().find(|(word, _)| word.starts_with(c)) {
             if temp == 0 {
                 // 单位前面没有数字，如十、百、千、万
                 temp = 1;

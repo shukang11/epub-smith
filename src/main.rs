@@ -86,15 +86,14 @@ fn main() -> Result<()> {
         {
             use std::process::Command;
             if let Ok(output) = Command::new("defaults")
-                .args(&["read", "-g", "AppleLanguages"])
+                .args(["read", "-g", "AppleLanguages"])
                 .output()
             {
                 if output.status.success() {
                     let stdout = String::from_utf8_lossy(&output.stdout);
                     if let Some(lang_code) = stdout
-                        .split(|c| c == '"' || c == '(' || c == ')' || c == ',')
-                        .filter(|s| !s.trim().is_empty())
-                        .next()
+                        .split(&['"', '(', ')', ','])
+                        .find(|s| !s.trim().is_empty())
                     {
                         let lang_code = lang_code.split('-').next().unwrap_or(lang_code);
                         let lang_code = lang_code.split('_').next().unwrap_or(lang_code);
@@ -118,24 +117,23 @@ fn main() -> Result<()> {
             use winreg::enums::*;
             use winreg::RegKey;
 
-            if let Ok(hkcu) = RegKey::predef(HKEY_CURRENT_USER) {
-                if let Ok(international) = hkcu.open_subkey("Control Panel\\International") {
-                    if let Ok(locale_name) = international.get_value::<String, _>("Locale") {
-                        let lang_code = if locale_name.len() >= 5 {
-                            &locale_name[..5]
-                        } else {
-                            &locale_name
-                        };
+            let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+            if let Ok(international) = hkcu.open_subkey("Control Panel\\International") {
+                if let Ok(locale_name) = international.get_value::<String, _>("Locale") {
+                    let lang_code = if locale_name.len() >= 5 {
+                        &locale_name[..5]
+                    } else {
+                        &locale_name
+                    };
 
-                        if supported_locales.contains(&lang_code) {
-                            rust_i18n::set_locale(lang_code);
-                        } else if lang_code.starts_with("zh") {
-                            rust_i18n::set_locale("zh-CN");
-                        } else if lang_code.starts_with("ja") {
-                            rust_i18n::set_locale("ja");
-                        } else if lang_code.starts_with("ko") {
-                            rust_i18n::set_locale("ko");
-                        }
+                    if supported_locales.contains(&lang_code) {
+                        rust_i18n::set_locale(lang_code);
+                    } else if lang_code.starts_with("zh") {
+                        rust_i18n::set_locale("zh-CN");
+                    } else if lang_code.starts_with("ja") {
+                        rust_i18n::set_locale("ja");
+                    } else if lang_code.starts_with("ko") {
+                        rust_i18n::set_locale("ko");
                     }
                 }
             }
