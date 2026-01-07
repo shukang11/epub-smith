@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use std::io::Write;
 use std::path::PathBuf;
+use std::process::Command;
 use zip::CompressionMethod;
 use zip::write::{FileOptions, ZipWriter};
 
@@ -96,10 +97,7 @@ pub fn add_file_to_zip(
 
 /// 验证EPUB文件
 pub fn validate_epub(path: &PathBuf) -> Result<()> {
-    // 注意：这里应该调用epubcheck工具
-    // 由于epubcheck是一个外部工具，我们暂时只进行简单的验证
-    // 检查文件是否存在且大小合理
-
+    // 首先检查文件是否存在且大小合理
     let metadata = std::fs::metadata(path)?;
 
     if metadata.len() < 100 {
@@ -110,9 +108,63 @@ pub fn validate_epub(path: &PathBuf) -> Result<()> {
         "EPUB file created successfully: {}",
         path.display()
     ));
-    GLOBAL_OUTPUT.info(t!("epubcheck-not-implemented"));
-    GLOBAL_OUTPUT.info(t!("epubcheck-instruction"));
-    GLOBAL_OUTPUT.info(t!("epubcheck-command", path = path.display()));
+
+    // 检查Java是否安装
+    match Command::new("java").arg("-version").status() {
+        Ok(status) if status.success() => {
+            // Java已安装，检查epubcheck是否可用
+            match Command::new("java").arg("-jar").arg("epubcheck.jar").arg("-version").status() {
+                Ok(status) if status.success() => {
+                    // epubcheck可用，执行验证
+                    GLOBAL_OUTPUT.info("Running epubcheck validation...");
+                    let output = Command::new("java")
+                        .arg("-jar")
+                        .arg("epubcheck.jar")
+                        .arg(path)
+                        .output()?;
+
+                    // 处理输出结果
+                    if output.status.success() {
+                        GLOBAL_OUTPUT.success("EPUB validation passed!");
+                    } else {
+                        let stderr = String::from_utf8_lossy(&output.stderr);
+                        GLOBAL_OUTPUT.warning("EPUB validation found issues:");
+                        GLOBAL_OUTPUT.warning(&stderr);
+                    }
+                },
+                _ => {
+                    // epubcheck不可用，检查系统PATH中是否有epubcheck命令
+                    match Command::new("epubcheck").arg("--version").status() {
+                        Ok(status) if status.success() => {
+                            // epubcheck命令可用，执行验证
+                            GLOBAL_OUTPUT.info("Running epubcheck validation...");
+                            let output = Command::new("epubcheck").arg(path).output()?;
+
+                            // 处理输出结果
+                            if output.status.success() {
+                                GLOBAL_OUTPUT.success("EPUB validation passed!");
+                            } else {
+                                let stderr = String::from_utf8_lossy(&output.stderr);
+                                GLOBAL_OUTPUT.warning("EPUB validation found issues:");
+                                GLOBAL_OUTPUT.warning(&stderr);
+                            }
+                        },
+                        _ => {
+                            // epubcheck不可用，提供安装指导
+                            GLOBAL_OUTPUT.info(t!("epubcheck-not-implemented"));
+                            GLOBAL_OUTPUT.info(t!("epubcheck-instruction"));
+                            GLOBAL_OUTPUT.info(t!("epubcheck-command", path = path.display()));
+                        }
+                    }
+                }
+            }
+        },
+        _ => {
+            // Java未安装，提供安装指导
+            GLOBAL_OUTPUT.warning("Java is not installed. Epubcheck requires Java to run.");
+            GLOBAL_OUTPUT.info(t!("epubcheck-instruction"));
+        }
+    }
 
     Ok(())
 }

@@ -173,7 +173,7 @@ fn handle_convert_command(args: ConvertArgs, debug: bool) -> Result<()> {
     let parse_start = std::time::Instant::now();
     let mut book = 
         parse_txt(&args.input, &config).with_context(|| "Failed to parse input files")?;
-    let parse_duration = parse_start.elapsed();
+    let _parse_duration = parse_start.elapsed();
 
     spinner.finish_with_message(t!("success-text-parsed"));
 

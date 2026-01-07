@@ -30,7 +30,7 @@ success-xhtml-rendered: "XHTML文件渲染成功"
 success-epub-packaged: "EPUB打包成功"
 
 # Epubcheck messages
-epubcheck-not-implemented: "注意：epubcheck验证尚未实现。"
+epubcheck-not-implemented: "注意：系统中未检测到可用的epubcheck。"
 epubcheck-instruction: "要验证您的EPUB，请从https://github.com/w3c/epubcheck下载epubcheck"
 epubcheck-command: "然后运行：java -jar epubcheck.jar %{path}"
 

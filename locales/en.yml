@@ -30,7 +30,7 @@ success-xhtml-rendered: "XHTML files rendered successfully"
 success-epub-packaged: "EPUB packaged successfully"
 
 # Epubcheck messages
-epubcheck-not-implemented: "Note: epubcheck validation is not implemented yet."
+epubcheck-not-implemented: "Note: No available epubcheck detected in the system."
 epubcheck-instruction: "To validate your EPUB, download epubcheck from https://github.com/w3c/epubcheck"
 epubcheck-command: "and run: java -jar epubcheck.jar %{path}"
 

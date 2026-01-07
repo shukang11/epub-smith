@@ -77,7 +77,7 @@ impl Config {
     }
 
     /// 从 snapshot save 命令参数创建配置
-    pub fn from_snapshot_save_args(input: &[PathBuf], rules: Option<PathBuf>) -> Result<Self> {
+    pub fn from_snapshot_save_args(_input: &[PathBuf], rules: Option<PathBuf>) -> Result<Self> {
         // 加载规则文件或使用默认规则
         let rules = if let Some(rules_path) = rules {
             Config::load_rules(&rules_path)?
@@ -134,7 +134,7 @@ impl Config {
     }
 
     /// 从命令行参数创建配置（用于向后兼容，现在主要用于处理默认命令）
-    pub fn from_args(args: &Args) -> Result<Self> {
+    pub fn from_args(_args: &Args) -> Result<Self> {
         // 这个方法现在主要用于处理默认命令，实际功能已被其他方法替代
         // 这里简化实现，因为默认命令现在会显示帮助信息
         Ok(Self {
