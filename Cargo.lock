@@ -157,36 +157,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "booksmith"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_cmd",
- "chardet",
- "chrono",
- "clap",
- "console",
- "encoding_rs",
- "fern",
- "indicatif",
- "lazy_static",
- "log",
- "predicates",
- "regex",
- "rust-i18n",
- "serde",
- "slug",
- "tempfile",
- "tera",
- "thiserror",
- "toml 0.9.10+spec-1.1.0",
- "uuid",
- "walkdir",
- "winreg",
- "zip",
-]
-
-[[package]]
 name = "bstr"
 version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -474,6 +444,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75030f3c4f45dafd7586dd6780965a8c7e8e285a5ecb86713e63a79c5b2766f3"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "epub-smith"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "chardet",
+ "chrono",
+ "clap",
+ "console",
+ "encoding_rs",
+ "fern",
+ "indicatif",
+ "lazy_static",
+ "log",
+ "predicates",
+ "regex",
+ "rust-i18n",
+ "serde",
+ "slug",
+ "tempfile",
+ "tera",
+ "thiserror",
+ "toml 0.9.10+spec-1.1.0",
+ "uuid",
+ "walkdir",
+ "winreg",
+ "zip",
 ]
 
 [[package]]

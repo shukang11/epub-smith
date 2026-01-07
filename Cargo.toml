@@ -1,18 +1,18 @@
 [package]
-name = "booksmith"
+name = "epub-smith"
 version = "0.1.0"
 authors = ["Your Name <your.email@example.com>"]
 description = "A predictable, explainable, and reusable TXT to EPUB CLI tool"
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/yourusername/booksmith"
-repository = "https://github.com/yourusername/booksmith"
+homepage = "https://github.com/shukang11/epub-smith"
+repository = "https://github.com/shukang11/epub-smith"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
-name = "booksmith"
+name = "epub-smith"
 path = "src/main.rs"
 
 [dependencies]

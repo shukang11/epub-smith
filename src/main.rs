@@ -11,10 +11,10 @@ rust_i18n::i18n!("locales", fallback = "en");
 // Import t macro for translation
 use rust_i18n::t;
 
-use booksmith::{cli::Args, config::Config, parser::parse_txt, renderer::render_book, packager::package_epub, extract_chapter_number, export::export_template};
+use epub_smith::{cli::Args, config::Config, parser::parse_txt, renderer::render_book, packager::package_epub, extract_chapter_number, export::export_template};
 
 /// Check chapter coherence
-fn check_chapter_coherence(chapters: &[booksmith::models::Chapter], extraction_rules: &Option<booksmith::models::ChapterNumberExtraction>) {
+fn check_chapter_coherence(chapters: &[epub_smith::models::Chapter], extraction_rules: &Option<epub_smith::models::ChapterNumberExtraction>) {
     let chapter_nums: Vec<Option<usize>> = chapters
         .iter()
         .map(|chapter| extract_chapter_number(&chapter.title, extraction_rules))
@@ -166,7 +166,7 @@ fn main() -> Result<()> {
         }
     }
 
-    info!("Starting BookSmith v{}", env!("CARGO_PKG_VERSION"));
+    info!("Starting EpubSmith v{}", env!("CARGO_PKG_VERSION"));
     info!("Input: {}", args.input.as_ref().unwrap().display());
 
     // 开始总计时

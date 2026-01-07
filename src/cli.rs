@@ -7,12 +7,12 @@ pub const DEFAULT_OUTPUT_FILENAME: &str = "book.epub";
 /// A predictable, explainable, and reusable TXT to EPUB CLI tool
 #[derive(Parser, Debug)]
 #[command(
-    name = "booksmith",
+    name = "epub-smith",
     author = "Your Name <your.email@example.com>",
     version = env!("CARGO_PKG_VERSION"),
     about = "Convert TXT files to EPUB with predictable results",
-    long_about = "BookSmith is a CLI tool that converts plain text files to well-structured EPUB books with predictable results.",
-    after_help = "For more information, see https://github.com/yourusername/booksmith\n\nExamples:\n  booksmith my_book.txt\n  booksmith --author \"John Doe\" --title \"My Book\" input.txt\n  booksmith --rules custom_rules.toml --output my_book.epub input.txt",
+    long_about = "EpubSmith is a CLI tool that converts plain text files to well-structured EPUB books with predictable results.",
+    after_help = "For more information, see https://github.com/yourusername/epub-smith\n\nExamples:\n  epub-smith my_book.txt\n  epub-smith --author \"John Doe\" --title \"My Book\" input.txt\n  epub-smith --rules custom_rules.toml --output my_book.epub input.txt",
     arg_required_else_help = true
 )]
 pub struct Args {
