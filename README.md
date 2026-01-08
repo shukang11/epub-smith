@@ -4,12 +4,28 @@ A predictable, explainable, and reusable TXT to EPUB CLI tool written in Rust.
 
 **Core Philosophy**: Focus on doing one thing well - generating standardized, stable EPUB files. For other formats, use downstream professional tools with our recommended pipelines.
 
+[![中文版本](https://img.shields.io/badge/README-%E4%B8%AD%E6%96%87%E7%89%88%E6%9C%AC-blue)](README_zh.md)
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Command Structure](#command-structure)
+- [Custom Styling](#custom-styling)
+- [Debugging and Performance](#debugging-and-performance)
+- [Testing](#testing)
+- [Recommended Pipelines](#recommended-pipelines)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+- [Contact](#contact)
+
 ## Features
 
 - **Predictable Results**: Convert plain text files to well-structured EPUB books with consistent output
 - **Easy to Use**: Simple command-line interface with sensible defaults
 - **Customizable**: Support for custom parsing rules and templates
-- **Multi-language Support**: Built-in internationalization for English, Chinese, and other languages
 - **Chapter Coherence Check**: Automatically verify chapter numbering consistency
 - **Performance Optimized**: Fast parsing and generation with performance metrics available
 - **Debugging Tools**: Dry run mode, chapter outline preview, and detailed performance analysis
@@ -21,6 +37,55 @@ A predictable, explainable, and reusable TXT to EPUB CLI tool written in Rust.
 - **Input Validation**: Diagnose text structure issues with preview commands
 
 ## Installation
+
+### Using the Install Script
+
+The easiest way to install EpubSmith is using the provided installation script. This script will automatically:
+- Detect the latest release version from GitHub
+- Identify your operating system and architecture
+- Download the appropriate binary package
+- Install it to a suitable location
+- Configure your PATH environment variable if needed
+
+#### Quick Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shukang11/epub-smith/main/install.sh | bash
+```
+
+This will install the latest version of EpubSmith on your system.
+
+#### Install a Specific Version
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shukang11/epub-smith/main/install.sh | bash -s -- --version v0.2.0
+```
+
+#### Download Only
+
+If you only want to download the binary without installing it:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shukang11/epub-smith/main/install.sh | bash -s -- --download-only
+```
+
+#### Check Installation
+
+After installation, you can verify that EpubSmith is installed correctly by running:
+
+```bash
+epub-smith --version
+# or use the short name
+epbs --version
+```
+
+You should see the installed version number. To get help, run:
+
+```bash
+epub-smith --help
+# or
+epbs --help
+```
 
 ### From Source
 
@@ -36,11 +101,7 @@ A predictable, explainable, and reusable TXT to EPUB CLI tool written in Rust.
    ```
 4. The executable will be available at `target/release/epub-smith`
 
-### Install via Cargo
 
-```bash
-cargo install epub-smith
-```
 
 ## Quick Start
 
@@ -218,17 +279,6 @@ This will create a directory with the default templates and CSS files. You can t
 epub-smith convert input.txt --style my_templates/default.css
 ```
 
-## Internationalization
-
-EpubSmith supports multiple languages. You can specify the output language using the `--lang` option:
-
-```bash
-epub-smith --lang en convert input.txt
-```
-
-Currently supported languages:
-- English (`en`)
-- Chinese (`zh-CN`)
 
 ## Debugging and Performance
 
@@ -299,46 +349,9 @@ ebook-convert novel.epub novel.pdf
 pandoc novel.epub -o novel.pdf --pdf-engine=xelatex
 ```
 
-## Project Structure
-
-```
-├── src/
-│   ├── parser/          # Text parsing logic
-│   ├── renderer/        # EPUB rendering logic
-│   ├── resources/       # Default resources (CSS, etc.)
-│   ├── templates/       # Tera templates for EPUB generation
-│   ├── utils/           # Utility functions
-│   │   ├── coherence.rs # Chapter coherence checking
-│   │   ├── html.rs      # HTML processing functions
-│   │   └── number.rs    # Number conversion functions
-│   ├── cli.rs           # Command-line argument parsing
-│   ├── config.rs        # Configuration handling
-│   ├── export.rs        # Template export functionality
-│   ├── lib.rs           # Main library code
-│   ├── main.rs          # CLI entry point
-│   ├── models.rs        # Data models
-│   ├── output.rs        # Output management
-│   └── packager.rs      # EPUB packaging logic
-├── tests/               # Test suite
-├── locales/             # Internationalization files
-├── docs/                # Documentation
-├── Cargo.toml           # Rust dependencies and configuration
-└── README.md            # This file
-```
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a new branch for your feature or bug fix
-3. Make your changes
-4. Run the test suite: `cargo test`
-5. Run clippy: `cargo clippy`
-6. Run rustfmt: `cargo fmt`
-7. Submit a Pull Request
 
 ## License
 
