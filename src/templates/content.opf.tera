@@ -16,8 +16,8 @@
         {% endfor %}
         <item href="style.css" id="css" media-type="text/css" />
         <item href="nav.xhtml" id="nav" media-type="application/xhtml+xml" properties="nav" />
-        {% if book.meta.cover %}
-        <item href="{{ book.meta.cover }}" id="cover-image" media-type="image/jpeg" properties="cover-image" />
+        {% if cover_item %}
+        {{ cover_item }}
         {% endif %}
     </manifest>
     <spine>

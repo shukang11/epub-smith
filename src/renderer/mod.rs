@@ -56,6 +56,20 @@ pub fn render_book(book: &Book, config: &Config) -> Result<Vec<PathBuf>> {
     render_container(&container_path)?;
     xhtml_files.push(container_path);
 
+    // 处理封面图片
+    if let Some(cover_path) = &book.meta.cover {
+        let cover_ext = cover_path
+            .extension()
+            .and_then(|os_str| os_str.to_str())
+            .unwrap_or("png");
+        
+        let cover_filename = format!("cover.{}", cover_ext);
+        let dest_cover_path = temp_path.join(&cover_filename);
+        std::fs::copy(cover_path, &dest_cover_path)
+            .with_context(|| format!("Failed to copy cover image from {} to {}", cover_path.display(), dest_cover_path.display()))?;
+        xhtml_files.push(dest_cover_path);
+    }
+
     Ok(xhtml_files)
 }
 
@@ -128,6 +142,27 @@ pub fn render_opf(
         .collect();
 
     context.insert("xhtml_files", &xhtml_filenames);
+
+    // 处理封面文件名
+    let cover_item = if let Some(cover_path) = &book.meta.cover {
+        let cover_ext = cover_path
+            .extension()
+            .and_then(|os_str| os_str.to_str())
+            .unwrap_or("png");
+        
+        let media_type = match cover_ext.to_lowercase().as_str() {
+            "jpg" | "jpeg" => "image/jpeg",
+            "png" => "image/png",
+            "gif" => "image/gif",
+            _ => "image/png",
+        };
+        
+        let filename = format!("cover.{}", cover_ext);
+        Some(format!(r#"        <item href="{}" id="cover-image" media-type="{}" properties="cover-image" />"#, filename, media_type))
+    } else {
+        None
+    };
+    context.insert("cover_item", &cover_item);
 
     let rendered = tera.render("content.opf", &context)?;
     std::fs::write(output_path, rendered)?;
