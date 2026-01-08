@@ -21,7 +21,8 @@ pub fn check_chapter_coherence(
         .collect();
 
     if !numbered_chapters.is_empty() {
-        let mut seen_nums: std::collections::HashMap<usize, &Chapter> = std::collections::HashMap::new();
+        let mut seen_nums: std::collections::HashMap<usize, &Chapter> =
+            std::collections::HashMap::new();
         for (num, chapter) in &numbered_chapters {
             if let Some(prev_chapter) = seen_nums.get(num) {
                 GLOBAL_OUTPUT.warning(format!(

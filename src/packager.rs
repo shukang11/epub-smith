@@ -113,7 +113,12 @@ pub fn validate_epub(path: &PathBuf) -> Result<()> {
     match Command::new("java").arg("-version").status() {
         Ok(status) if status.success() => {
             // Java已安装，检查epubcheck是否可用
-            match Command::new("java").arg("-jar").arg("epubcheck.jar").arg("-version").status() {
+            match Command::new("java")
+                .arg("-jar")
+                .arg("epubcheck.jar")
+                .arg("-version")
+                .status()
+            {
                 Ok(status) if status.success() => {
                     // epubcheck可用，执行验证
                     GLOBAL_OUTPUT.info("Running epubcheck validation...");
@@ -131,7 +136,7 @@ pub fn validate_epub(path: &PathBuf) -> Result<()> {
                         GLOBAL_OUTPUT.warning("EPUB validation found issues:");
                         GLOBAL_OUTPUT.warning(&stderr);
                     }
-                },
+                }
                 _ => {
                     // epubcheck不可用，检查系统PATH中是否有epubcheck命令
                     match Command::new("epubcheck").arg("--version").status() {
@@ -148,7 +153,7 @@ pub fn validate_epub(path: &PathBuf) -> Result<()> {
                                 GLOBAL_OUTPUT.warning("EPUB validation found issues:");
                                 GLOBAL_OUTPUT.warning(&stderr);
                             }
-                        },
+                        }
                         _ => {
                             // epubcheck不可用，提供安装指导
                             GLOBAL_OUTPUT.info(t!("epubcheck-not-implemented"));
@@ -158,7 +163,7 @@ pub fn validate_epub(path: &PathBuf) -> Result<()> {
                     }
                 }
             }
-        },
+        }
         _ => {
             // Java未安装，提供安装指导
             GLOBAL_OUTPUT.warning("Java is not installed. Epubcheck requires Java to run.");

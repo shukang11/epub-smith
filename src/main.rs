@@ -4,6 +4,18 @@ use indicatif::ProgressBar;
 use log::info;
 use std::time::Duration;
 
+struct SnapshotLoadArgs {
+    file: std::path::PathBuf,
+    output: std::path::PathBuf,
+    rules: Option<std::path::PathBuf>,
+    author: Option<String>,
+    title: Option<String>,
+    language: String,
+    check: bool,
+    style: Option<std::path::PathBuf>,
+    debug: bool,
+}
+
 // Initialize internationalization support
 rust_i18n::i18n!("locales", fallback = "en");
 
@@ -13,7 +25,11 @@ use rust_i18n::t;
 use epub_smith::output::GLOBAL_OUTPUT;
 use epub_smith::utils::coherence::check_chapter_coherence;
 use epub_smith::{
-    cli::{Args, Commands, ConvertArgs, TemplateCommands, SnapshotCommands, PreviewCommands}, config::Config, export::export_template, packager::package_epub, parser::parse_txt,
+    cli::{Args, Commands, ConvertArgs, PreviewCommands, SnapshotCommands, TemplateCommands},
+    config::Config,
+    export::export_template,
+    packager::package_epub,
+    parser::parse_txt,
     renderer::render_book,
 };
 
@@ -49,25 +65,26 @@ fn main() -> Result<()> {
             if let Ok(output) = Command::new("defaults")
                 .args(["read", "-g", "AppleLanguages"])
                 .output()
-                && output.status.success() {
-                    let stdout = String::from_utf8_lossy(&output.stdout);
-                    if let Some(lang_code) = stdout
-                        .split(&['"', '(', ')', ','])
-                        .find(|s| !s.trim().is_empty())
-                    {
-                        let lang_code = lang_code.split('-').next().unwrap_or(lang_code);
-                        let lang_code = lang_code.split('_').next().unwrap_or(lang_code);
+                && output.status.success()
+            {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                if let Some(lang_code) = stdout
+                    .split(&['"', '(', ')', ','])
+                    .find(|s| !s.trim().is_empty())
+                {
+                    let lang_code = lang_code.split('-').next().unwrap_or(lang_code);
+                    let lang_code = lang_code.split('_').next().unwrap_or(lang_code);
 
-                        if supported_locales.contains(&lang_code) {
-                            rust_i18n::set_locale(lang_code);
-                        } else if lang_code.starts_with("zh") {
-                            rust_i18n::set_locale("zh-CN");
-                        } else if lang_code.starts_with("ja") {
-                            rust_i18n::set_locale("ja");
-                        } else if lang_code.starts_with("ko") {
-                            rust_i18n::set_locale("ko");
-                        }
+                    if supported_locales.contains(&lang_code) {
+                        rust_i18n::set_locale(lang_code);
+                    } else if lang_code.starts_with("zh") {
+                        rust_i18n::set_locale("zh-CN");
+                    } else if lang_code.starts_with("ja") {
+                        rust_i18n::set_locale("ja");
+                    } else if lang_code.starts_with("ko") {
+                        rust_i18n::set_locale("ko");
                     }
+                }
             }
         }
 
@@ -131,10 +148,26 @@ fn main() -> Result<()> {
             export_template(&directory)?;
         }
         Commands::Snapshot(SnapshotCommands::Save(snapshot_args)) => {
-            handle_snapshot_save_command(snapshot_args.input, snapshot_args.rules, snapshot_args.output, args.debug)?;
+            handle_snapshot_save_command(
+                snapshot_args.input,
+                snapshot_args.rules,
+                snapshot_args.output,
+                args.debug,
+            )?;
         }
         Commands::Snapshot(SnapshotCommands::Load(snapshot_args)) => {
-            handle_snapshot_load_command(snapshot_args.file, snapshot_args.output, snapshot_args.rules, snapshot_args.author, snapshot_args.title, snapshot_args.language, snapshot_args.check, snapshot_args.style, args.debug)?;
+            let args = SnapshotLoadArgs {
+                file: snapshot_args.file,
+                output: snapshot_args.output,
+                rules: snapshot_args.rules,
+                author: snapshot_args.author,
+                title: snapshot_args.title,
+                language: snapshot_args.language,
+                check: snapshot_args.check,
+                style: snapshot_args.style,
+                debug: args.debug,
+            };
+            handle_snapshot_load_command(args)?;
         }
         Commands::Preview(PreviewCommands::Outline(preview_args)) => {
             handle_preview_outline_command(preview_args.input, preview_args.rules, args.debug)?;
@@ -154,7 +187,7 @@ fn handle_convert_command(args: ConvertArgs, debug: bool) -> Result<()> {
 
     // 检查是否使用了标准输入
     let use_stdin = !args.input.is_empty() && args.input[0].to_string_lossy() == "-";
-    
+
     // 确保有输入文件
     if args.input.is_empty() && !use_stdin {
         anyhow::bail!("No input files provided");
@@ -171,7 +204,7 @@ fn handle_convert_command(args: ConvertArgs, debug: bool) -> Result<()> {
 
     // 开始解析计时
     let parse_start = std::time::Instant::now();
-    let mut book = 
+    let mut book =
         parse_txt(&args.input, &config).with_context(|| "Failed to parse input files")?;
     let _parse_duration = parse_start.elapsed();
 
@@ -188,10 +221,15 @@ fn handle_convert_command(args: ConvertArgs, debug: bool) -> Result<()> {
 }
 
 /// 处理 snapshot save 命令
-fn handle_snapshot_save_command(input: Vec<std::path::PathBuf>, rules: Option<std::path::PathBuf>, output: std::path::PathBuf, debug: bool) -> Result<()> {
+fn handle_snapshot_save_command(
+    input: Vec<std::path::PathBuf>,
+    rules: Option<std::path::PathBuf>,
+    output: std::path::PathBuf,
+    debug: bool,
+) -> Result<()> {
     // 检查是否使用了标准输入
     let use_stdin = !input.is_empty() && input[0].to_string_lossy() == "-";
-    
+
     // 确保有输入文件
     if input.is_empty() && !use_stdin {
         anyhow::bail!("No input files provided");
@@ -208,8 +246,7 @@ fn handle_snapshot_save_command(input: Vec<std::path::PathBuf>, rules: Option<st
 
     // 开始解析计时
     let parse_start = std::time::Instant::now();
-    let mut book = 
-        parse_txt(&input, &config).with_context(|| "Failed to parse input files")?;
+    let mut book = parse_txt(&input, &config).with_context(|| "Failed to parse input files")?;
     let parse_duration = parse_start.elapsed();
 
     spinner.finish_with_message(t!("success-text-parsed"));
@@ -237,39 +274,48 @@ fn handle_snapshot_save_command(input: Vec<std::path::PathBuf>, rules: Option<st
 }
 
 /// 处理 snapshot load 命令
-fn handle_snapshot_load_command(file: std::path::PathBuf, output: std::path::PathBuf, rules: Option<std::path::PathBuf>, author: Option<String>, title: Option<String>, language: String, check: bool, style: Option<std::path::PathBuf>, debug: bool) -> Result<()> {
+fn handle_snapshot_load_command(args: SnapshotLoadArgs) -> Result<()> {
     // 开始总计时
     let total_start = std::time::Instant::now();
-    let config = Config::from_snapshot_load_args(output, rules, check, style)?;
+    let config = Config::from_snapshot_load_args(args.output, args.rules, args.check, args.style)?;
 
     // 读取并解析快照文件
     let spinner = ProgressBar::new_spinner();
     spinner.set_message("Reading snapshot file...");
     spinner.enable_steady_tick(Duration::from_millis(120));
 
-    let snapshot_content = std::fs::read_to_string(&file)
-        .with_context(|| format!("Failed to read snapshot from: {}", file.display()))?;
+    let snapshot_content = std::fs::read_to_string(&args.file)
+        .with_context(|| format!("Failed to read snapshot from: {}", args.file.display()))?;
     let mut book: epub_smith::models::Book = serde_json::from_str(&snapshot_content)
-        .with_context(|| format!("Failed to parse snapshot from: {}", file.display()))?;
+        .with_context(|| format!("Failed to parse snapshot from: {}", args.file.display()))?;
 
     spinner.finish_with_message("Snapshot loaded successfully");
-    
+
     // 更新元数据
-    book.meta = config.merge_snapshot_load_meta(title.as_deref(), author.as_deref(), language.as_str(), book.meta.title.as_str());
+    book.meta = config.merge_snapshot_load_meta(
+        args.title.as_deref(),
+        args.author.as_deref(),
+        args.language.as_str(),
+        book.meta.title.as_str(),
+    );
 
     // 跳过快照导入时的章节连贯性检查，因为快照是手动调整过的
     info!("Skipping chapter coherence check for snapshot input");
 
     // 继续渲染和打包EPUB
-    goto_render_and_package(book, config, total_start, debug)?;
+    goto_render_and_package(book, config, total_start, args.debug)?;
     Ok(())
 }
 
 /// 处理 preview outline 命令
-fn handle_preview_outline_command(input: Vec<std::path::PathBuf>, rules: Option<std::path::PathBuf>, debug: bool) -> Result<()> {
+fn handle_preview_outline_command(
+    input: Vec<std::path::PathBuf>,
+    rules: Option<std::path::PathBuf>,
+    debug: bool,
+) -> Result<()> {
     // 检查是否使用了标准输入
     let use_stdin = !input.is_empty() && input[0].to_string_lossy() == "-";
-    
+
     // 确保有输入文件
     if input.is_empty() && !use_stdin {
         anyhow::bail!("No input files provided");
@@ -286,8 +332,7 @@ fn handle_preview_outline_command(input: Vec<std::path::PathBuf>, rules: Option<
 
     // 开始解析计时
     let parse_start = std::time::Instant::now();
-    let mut book = 
-        parse_txt(&input, &config).with_context(|| "Failed to parse input files")?;
+    let mut book = parse_txt(&input, &config).with_context(|| "Failed to parse input files")?;
     let parse_duration = parse_start.elapsed();
 
     spinner.finish_with_message(t!("success-text-parsed"));
@@ -319,10 +364,14 @@ fn handle_preview_outline_command(input: Vec<std::path::PathBuf>, rules: Option<
 }
 
 /// 处理 preview dryrun 命令
-fn handle_preview_dryrun_command(input: Vec<std::path::PathBuf>, rules: Option<std::path::PathBuf>, debug: bool) -> Result<()> {
+fn handle_preview_dryrun_command(
+    input: Vec<std::path::PathBuf>,
+    rules: Option<std::path::PathBuf>,
+    debug: bool,
+) -> Result<()> {
     // 检查是否使用了标准输入
     let use_stdin = !input.is_empty() && input[0].to_string_lossy() == "-";
-    
+
     // 确保有输入文件
     if input.is_empty() && !use_stdin {
         anyhow::bail!("No input files provided");
@@ -339,8 +388,7 @@ fn handle_preview_dryrun_command(input: Vec<std::path::PathBuf>, rules: Option<s
 
     // 开始解析计时
     let parse_start = std::time::Instant::now();
-    let mut book = 
-        parse_txt(&input, &config).with_context(|| "Failed to parse input files")?;
+    let mut book = parse_txt(&input, &config).with_context(|| "Failed to parse input files")?;
     let parse_duration = parse_start.elapsed();
 
     spinner.finish_with_message(t!("success-text-parsed"));
@@ -355,12 +403,7 @@ fn handle_preview_dryrun_command(input: Vec<std::path::PathBuf>, rules: Option<s
 
     for (i, chapter) in book.chapters.iter().enumerate() {
         let line_range = format!("lines {}-{}", chapter.start_line + 1, chapter.end_line + 1);
-        let formatted = format!(
-            "[{:03}] {} ({})\n",
-            i + 1,
-            chapter.title,
-            line_range
-        );
+        let formatted = format!("[{:03}] {} ({})\n", i + 1, chapter.title, line_range);
         GLOBAL_OUTPUT.info(formatted);
     }
 
@@ -377,15 +420,19 @@ fn handle_preview_dryrun_command(input: Vec<std::path::PathBuf>, rules: Option<s
 }
 
 /// 渲染和打包EPUB的通用函数
-fn goto_render_and_package(book: epub_smith::models::Book, config: epub_smith::config::Config, total_start: std::time::Instant, debug: bool) -> Result<()>
-{
+fn goto_render_and_package(
+    book: epub_smith::models::Book,
+    config: epub_smith::config::Config,
+    total_start: std::time::Instant,
+    debug: bool,
+) -> Result<()> {
     // 开始渲染计时
     let render_start = std::time::Instant::now();
     let spinner = ProgressBar::new_spinner();
     spinner.set_message(t!("processing-rendering-xhtml"));
     spinner.enable_steady_tick(Duration::from_millis(120));
-    
-    let xhtml_files = 
+
+    let xhtml_files =
         render_book(&book, &config).with_context(|| "Failed to render XHTML files")?;
     let render_duration = render_start.elapsed();
 

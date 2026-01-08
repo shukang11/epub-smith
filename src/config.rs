@@ -96,7 +96,12 @@ impl Config {
     }
 
     /// 从 snapshot load 命令参数创建配置
-    pub fn from_snapshot_load_args(output: PathBuf, rules: Option<PathBuf>, check: bool, style: Option<PathBuf>) -> Result<Self> {
+    pub fn from_snapshot_load_args(
+        output: PathBuf,
+        rules: Option<PathBuf>,
+        check: bool,
+        style: Option<PathBuf>,
+    ) -> Result<Self> {
         // 加载规则文件或使用默认规则
         let rules = if let Some(rules_path) = rules {
             Config::load_rules(&rules_path)?
@@ -228,7 +233,13 @@ impl Config {
     }
 
     /// 合并 snapshot load 命令的元数据
-    pub fn merge_snapshot_load_meta(&self, title: Option<&str>, author: Option<&str>, language: &str, default_title: &str) -> Meta {
+    pub fn merge_snapshot_load_meta(
+        &self,
+        title: Option<&str>,
+        author: Option<&str>,
+        language: &str,
+        default_title: &str,
+    ) -> Meta {
         // 从规则文件获取元数据，如果不存在则使用默认值
         let mut meta = self.rules.meta.clone().unwrap_or_default();
 

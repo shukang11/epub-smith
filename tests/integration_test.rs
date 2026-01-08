@@ -370,23 +370,23 @@ fn test_snapshot_export() {
 这是第三章"#;
     let temp_file = tempfile::NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     // 创建临时快照文件路径
     let snapshot_path = tempfile::NamedTempFile::new().unwrap();
     let snapshot_path_str = snapshot_path.path().to_str().unwrap();
-    
+
     let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("snapshot")
         .arg("save")
         .arg(temp_file.path())
         .arg("-o")
         .arg(snapshot_path_str);
-    
+
     cmd.assert().success();
-    
+
     // 验证快照文件是否存在且不为空
     assert!(std::fs::metadata(snapshot_path_str).unwrap().len() > 0);
-    
+
     // 验证快照文件是否为有效的JSON
     let snapshot_content = std::fs::read_to_string(snapshot_path_str).unwrap();
     let _: serde_json::Value = serde_json::from_str(&snapshot_content).unwrap();
@@ -405,20 +405,20 @@ fn test_lint_snapshot_export() {
 这是第三章"#;
     let temp_file = tempfile::NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     // 创建临时快照文件路径
     let snapshot_path = tempfile::NamedTempFile::new().unwrap();
     let snapshot_path_str = snapshot_path.path().to_str().unwrap();
-    
+
     let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("snapshot")
         .arg("save")
         .arg(temp_file.path())
         .arg("-o")
         .arg(snapshot_path_str);
-    
+
     cmd.assert().success();
-    
+
     // 验证快照文件是否存在且不为空
     assert!(std::fs::metadata(snapshot_path_str).unwrap().len() > 0);
 }
@@ -436,11 +436,11 @@ fn test_snapshot_import() {
 这是第三章"#;
     let temp_file = tempfile::NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     // 创建临时快照文件路径
     let snapshot_path = tempfile::NamedTempFile::new().unwrap();
     let snapshot_path_str = snapshot_path.path().to_str().unwrap();
-    
+
     // 导出快照
     let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("snapshot")
@@ -449,11 +449,11 @@ fn test_snapshot_import() {
         .arg("-o")
         .arg(snapshot_path_str);
     cmd.assert().success();
-    
+
     // 创建临时输出文件路径
     let output_path = tempfile::NamedTempFile::new().unwrap();
     let output_path_str = output_path.path().to_str().unwrap();
-    
+
     // 使用快照生成EPUB
     let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("snapshot")
@@ -461,9 +461,9 @@ fn test_snapshot_import() {
         .arg(snapshot_path_str)
         .arg("-o")
         .arg(output_path_str);
-    
+
     cmd.assert().success();
-    
+
     // 验证EPUB文件是否生成
     assert!(std::fs::metadata(output_path_str).unwrap().len() > 0);
 }
@@ -475,11 +475,11 @@ fn test_snapshot_with_input_files_error() {
 这是第一章"#;
     let temp_file = tempfile::NamedTempFile::new().unwrap();
     std::fs::write(temp_file.path(), content).unwrap();
-    
+
     // 创建临时快照文件路径
     let snapshot_path = tempfile::NamedTempFile::new().unwrap();
     let snapshot_path_str = snapshot_path.path().to_str().unwrap();
-    
+
     // 导出快照
     let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("snapshot")
@@ -488,14 +488,14 @@ fn test_snapshot_with_input_files_error() {
         .arg("-o")
         .arg(snapshot_path_str);
     cmd.assert().success();
-    
+
     // snapshot-load 命令不支持同时指定输入文件，会报错
     let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
     cmd.arg("snapshot")
         .arg("load")
         .arg(snapshot_path_str)
         .arg(temp_file.path());
-    
+
     cmd.assert().failure();
 }
 
@@ -505,19 +505,19 @@ fn test_snapshot_with_input_files_error() {
 //     // 创建测试内容
 //     let content = r#"第1章
 // 这是第一章
-// 
+//
 // 第2章
 // 这是第二章"#;
 //     let temp_file = NamedTempFile::new().unwrap();
 //     std::fs::write(temp_file.path(), content).unwrap();
-// 
+//
 //     let mut cmd = Command::cargo_bin("epub-smith").unwrap();
 //     cmd.arg("--explain")
 //         .arg("--dry-run")
 //         .arg("--lang")
 //         .arg("zh-CN")
 //         .arg(temp_file.path());
-// 
+//
 //     cmd.assert()
 //         .success()
 //         .stdout(predicate::str::contains("使用的章节正则表达式："));

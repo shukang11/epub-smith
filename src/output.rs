@@ -9,13 +9,13 @@ pub struct Output {
 }
 
 impl Default for Output {
-     fn default() -> Self {
-         Self {
+    fn default() -> Self {
+        Self {
             term: Term::stdout(),
             is_stderr: false,
         }
-     }
- }
+    }
+}
 
 impl Output {
     /// 创建新的标准错误输出实例
