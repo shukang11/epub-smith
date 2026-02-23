@@ -9,6 +9,7 @@ booksmith/
 │   ├── lib.rs                   # 库入口文件
 │   ├── cli.rs                   # CLI参数定义与解析
 │   ├── config.rs                # 配置管理
+│   ├── doctor.rs                # 诊断报告与可用性建议
 │   ├── models.rs                # 核心数据模型
 │   ├── output.rs                # 输出管理
 │   ├── export.rs                # 模板导出功能
@@ -55,7 +56,8 @@ booksmith/
 |------|------|------|
 | `cli.rs` | 定义和解析命令行参数 | 仅处理CLI相关逻辑，不涉及业务处理 |
 | `config.rs` | 管理应用配置，加载规则文件 | 仅处理配置相关逻辑 |
-| `models.rs` | 定义核心数据结构 | 仅包含数据模型定义，不包含业务逻辑 |
+| `doctor.rs` | 分析章节结构质量，输出问题分类与建议命令 | 仅处理诊断分析与建议生成，不参与渲染和打包 |
+| `models.rs` | 定义核心数据结构与默认解析规则（默认单位：章/节/卷/回，默认禁用“张”） | 仅包含数据模型定义和规则声明，不包含解析流程逻辑 |
 | `output.rs` | 管理输出格式化和显示 | 仅处理输出相关逻辑，不涉及业务处理 |
 | `export.rs` | 导出样式模板到指定目录 | 仅处理模板导出功能，不涉及其他业务逻辑 |
 
@@ -95,4 +97,4 @@ booksmith/
 | `templates/chapter.xhtml.tera` | 章节XHTML模板 | 仅定义模板结构，不包含业务逻辑 |
 | `templates/nav.xhtml.tera` | 导航XHTML模板 | 仅定义模板结构，不包含业务逻辑 |
 | `templates/content.opf.tera` | EPUB内容元数据模板，定义EPUB的manifest、spine和metadata | 仅定义模板结构，不包含业务逻辑 |
-| `resources/css/default.css` | 默认CSS样式 | 仅定义样式，不包含业务逻辑 |
+| `resources/css/default.css` | 默认CSS样式（方案 C：首行缩进 + 中等段距 + 段内换行保留） | 仅定义样式，不包含业务逻辑 |

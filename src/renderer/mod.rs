@@ -63,7 +63,7 @@ pub fn render_book(book: &Book, config: &Config) -> Result<Vec<PathBuf>> {
             .and_then(|os_str| os_str.to_str())
             .unwrap_or("png");
 
-        let cover_filename = format!("cover.{}", cover_ext);
+        let cover_filename = format!("cover.{cover_ext}");
         let dest_cover_path = temp_path.join(&cover_filename);
         std::fs::copy(cover_path, &dest_cover_path).with_context(|| {
             format!(
@@ -162,10 +162,9 @@ pub fn render_opf(
             _ => "image/png",
         };
 
-        let filename = format!("cover.{}", cover_ext);
+        let filename = format!("cover.{cover_ext}");
         Some(format!(
-            r#"        <item href="{}" id="cover-image" media-type="{}" properties="cover-image" />"#,
-            filename, media_type
+            r#"        <item href="{filename}" id="cover-image" media-type="{media_type}" properties="cover-image" />"#
         ))
     } else {
         None

@@ -48,9 +48,9 @@ impl Config {
                     {
                         let output_filename =
                             if let Some((name, _)) = input_filename.rsplit_once('.') {
-                                format!("{}.epub", name)
+                                format!("{name}.epub")
                             } else {
-                                format!("{}.epub", input_filename)
+                                format!("{input_filename}.epub")
                             };
                         PathBuf::from(output_filename)
                     } else {
@@ -134,6 +134,24 @@ impl Config {
             check: false,
             explain: false,
             encoding: None,
+            style: None,
+        })
+    }
+
+    /// 从 doctor 命令参数创建配置
+    pub fn from_doctor_args(rules: Option<PathBuf>, encoding: Option<String>) -> Result<Self> {
+        let rules = if let Some(rules_path) = rules {
+            Config::load_rules(&rules_path)?
+        } else {
+            Rules::default()
+        };
+
+        Ok(Self {
+            rules,
+            output: PathBuf::from(DEFAULT_OUTPUT_FILENAME), // doctor 命令不生成输出文件
+            check: false,
+            explain: false,
+            encoding,
             style: None,
         })
     }

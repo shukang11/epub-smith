@@ -22,7 +22,7 @@ pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Ve
         .regex
         .iter()
         .map(|pattern| {
-            Regex::new(pattern).with_context(|| format!("Invalid regex pattern: {}", pattern))
+            Regex::new(pattern).with_context(|| format!("Invalid regex pattern: {pattern}"))
         })
         .collect::<Result<_>>()?;
     let regex_duration = regex_start.elapsed();
@@ -94,18 +94,9 @@ pub fn parse_chapters(lines: &[&str], rules: &Rules, explain: bool) -> Result<Ve
         eprintln!("  ├───────────────────────────────────┬───────────────────────────────────────");
         eprintln!("  │ Step                              │ Duration                              ");
         eprintln!("  ├───────────────────────────────────┼───────────────────────────────────────");
-        eprintln!(
-            "  │ Regex compilation                 │ {:<37.2?}",
-            regex_duration
-        );
-        eprintln!(
-            "  │ Chapter detection                 │ {:<37.2?}",
-            detect_duration
-        );
-        eprintln!(
-            "  │ Chapter creation                  │ {:<37.2?}",
-            create_duration
-        );
+        eprintln!("  │ Regex compilation                 │ {regex_duration:<37.2?}");
+        eprintln!("  │ Chapter detection                 │ {detect_duration:<37.2?}");
+        eprintln!("  │ Chapter creation                  │ {create_duration:<37.2?}");
         eprintln!("  └───────────────────────────────────┴───────────────────────────────────────");
     }
 

@@ -257,3 +257,90 @@ fn test_parse_txt_with_broken_html() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_parser_does_not_false_split_on_zhang_or_exclamation_list() -> Result<()> {
+    let content = r#"第1章 开端
+这是第一章的内容
+一张张截图，迅速密集发出来。
+“这才是本格推理的魅力！1、弥赛亚不出手，2、弥赛亚有永生血脉。”
+这一段仍然属于第一章正文
+
+第2章 继续
+这是第二章的内容"#;
+
+    let temp_file = NamedTempFile::new()?;
+    std::fs::write(temp_file.path(), content)?;
+    let input = temp_file.path().to_owned();
+
+    let config = Config::from_convert_args(&epub_smith::cli::ConvertArgs {
+        input: vec![input.clone()],
+        rules: None,
+        output: PathBuf::from("output.epub"),
+        encoding: None,
+        title: None,
+        author: None,
+        cover: None,
+        language: "zh-CN".to_string(),
+        check: false,
+        style: None,
+    })?;
+
+    let book = parse_txt(&[input], &config)?;
+
+    assert_eq!(book.chapters.len(), 2);
+    assert_eq!(book.chapters[0].title, "第1章 开端");
+    assert_eq!(book.chapters[1].title, "第2章 继续");
+    assert!(
+        book.chapters[0]
+            .paragraphs
+            .iter()
+            .any(|p| p.contains("一张张截图"))
+    );
+    assert!(
+        book.chapters[0]
+            .paragraphs
+            .iter()
+            .any(|p| p.contains("！1、弥赛亚不出手"))
+    );
+
+    Ok(())
+}
+
+#[test]
+fn test_parser_supports_large_chinese_numbers_and_leading_whitespace() -> Result<()> {
+    let content = r#"第一百章 暗潮涌动
+这是第一百章内容
+
+第四百八十章 玩家成神
+这是第四百八十章内容
+
+    第一百零一章 缩进标题
+这是第一百零一章内容"#;
+
+    let temp_file = NamedTempFile::new()?;
+    std::fs::write(temp_file.path(), content)?;
+    let input = temp_file.path().to_owned();
+
+    let config = Config::from_convert_args(&epub_smith::cli::ConvertArgs {
+        input: vec![input.clone()],
+        rules: None,
+        output: PathBuf::from("output.epub"),
+        encoding: None,
+        title: None,
+        author: None,
+        cover: None,
+        language: "zh-CN".to_string(),
+        check: false,
+        style: None,
+    })?;
+
+    let book = parse_txt(&[input], &config)?;
+
+    assert_eq!(book.chapters.len(), 3);
+    assert_eq!(book.chapters[0].title, "第一百章 暗潮涌动");
+    assert_eq!(book.chapters[1].title, "第四百八十章 玩家成神");
+    assert_eq!(book.chapters[2].title, "第一百零一章 缩进标题");
+
+    Ok(())
+}

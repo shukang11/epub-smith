@@ -8,7 +8,9 @@ pub fn convert_chinese_to_arabic(chinese_num: &str) -> Option<usize> {
     // 定义基本中文数字映射
     let basic_map = [
         ("零", 0),
+        ("〇", 0),
         ("一", 1),
+        ("两", 2),
         ("二", 2),
         ("三", 3),
         ("四", 4),

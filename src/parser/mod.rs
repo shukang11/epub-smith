@@ -81,7 +81,7 @@ pub fn parse_txt(inputs: &[PathBuf], config: &Config) -> Result<Book> {
         let total_parse_duration = total_parse_start.elapsed();
 
         // 使用eprintln!打印调试信息，避免类型转换问题
-        let total_parse_duration_str = format!("{:.2?}", total_parse_duration);
+        let total_parse_duration_str = format!("{total_parse_duration:.2?}");
         let input_files_str = format!("{}", inputs.len());
         let total_lines_str = format!("{}", lines.len());
         let chapters_detected_str = format!("{}", chapters.len());
@@ -93,22 +93,10 @@ pub fn parse_txt(inputs: &[PathBuf], config: &Config) -> Result<Book> {
         eprintln!("  ├───────────────────────────────────┬───────────────────────────────────────");
         eprintln!("  │ Step                              │ Duration                              ");
         eprintln!("  ├───────────────────────────────────┼───────────────────────────────────────");
-        eprintln!(
-            "  │ Total parsing time                │ {:<37}",
-            total_parse_duration_str
-        );
-        eprintln!(
-            "  │ Input files processed             │ {:<37}",
-            input_files_str
-        );
-        eprintln!(
-            "  │ Total lines processed             │ {:<37}",
-            total_lines_str
-        );
-        eprintln!(
-            "  │ Chapters detected                 │ {:<37}",
-            chapters_detected_str
-        );
+        eprintln!("  │ Total parsing time                │ {total_parse_duration_str:<37}");
+        eprintln!("  │ Input files processed             │ {input_files_str:<37}");
+        eprintln!("  │ Total lines processed             │ {total_lines_str:<37}");
+        eprintln!("  │ Chapters detected                 │ {chapters_detected_str:<37}");
         eprintln!("  └───────────────────────────────────┴───────────────────────────────────────");
     }
 

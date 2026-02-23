@@ -3,6 +3,7 @@ rust_i18n::i18n!("locales", fallback = "en");
 
 pub mod cli;
 pub mod config;
+pub mod doctor;
 pub mod export;
 pub mod models;
 pub mod output;

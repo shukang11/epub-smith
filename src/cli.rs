@@ -52,6 +52,13 @@ pub enum Commands {
     /// Preview functionality
     #[command(subcommand)]
     Preview(PreviewCommands),
+
+    /// Diagnose parsing risks and data anomalies before conversion
+    #[command(
+        about = "Diagnose chapter parsing quality and provide actionable suggestions",
+        after_help = "Examples:\n  epub-smith doctor novel.txt\n  epub-smith doctor novel.txt -r rules.toml\n  epub-smith doctor novel.txt --encoding gbk"
+    )]
+    Doctor(DoctorArgs),
 }
 
 #[derive(clap::Subcommand, Debug)]
@@ -188,4 +195,24 @@ pub struct PreviewArgs {
     /// Rules file path (optional)
     #[arg(short = 'r', long = "rules", value_name = "RULES")]
     pub rules: Option<PathBuf>,
+}
+
+/// Arguments for doctor command
+#[derive(Parser, Debug)]
+pub struct DoctorArgs {
+    /// Input TXT file or directory
+    #[arg(value_name = "INPUT")]
+    pub input: Vec<PathBuf>,
+
+    /// Rules file path (optional)
+    #[arg(short = 'r', long = "rules", value_name = "RULES")]
+    pub rules: Option<PathBuf>,
+
+    /// Force input encoding (optional)
+    #[arg(short = 'e', long = "encoding", value_name = "ENCODING")]
+    pub encoding: Option<String>,
+
+    /// Max number of evidence samples per category
+    #[arg(long = "max-samples", value_name = "N", default_value_t = 5)]
+    pub max_samples: usize,
 }

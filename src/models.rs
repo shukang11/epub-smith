@@ -120,21 +120,19 @@ impl Default for ChapterRules {
     fn default() -> Self {
         Self {
             regex: vec![
-                r"^(?:第)?[一二三四五六七八九十0-9]+章".to_string(),
-                r"^(?:第)?[一二三四五六七八九十0-9]+节".to_string(),
-                r"^(?:第)?[一二三四五六七八九十0-9]+卷".to_string(),
-                r"^(?:第)?[一二三四五六七八九十0-9]+张".to_string(),
-                r"^Chapter\s+".to_string(),
-                r"^Section\s+".to_string(),
-                r"^Part\s+".to_string(),
-                r"^番外".to_string(),
-                r"^序".to_string(),
-                r"^尾声".to_string(),
-                r"^后记".to_string(),
-                r"^附录".to_string(),
-                r"^.+！[一二三四五六七八九十0-9]+、".to_string(),
-                r"^.+![一二三四五六七八九十0-9]+、".to_string(),
-                r"^正文".to_string(),
+                r"^\s*(?:第)?[零〇一二三四五六七八九十百千万两0-9]+章(?:\s|[:：\-—]|$)".to_string(),
+                r"^\s*(?:第)?[零〇一二三四五六七八九十百千万两0-9]+节(?:\s|[:：\-—]|$)".to_string(),
+                r"^\s*(?:第)?[零〇一二三四五六七八九十百千万两0-9]+卷(?:\s|[:：\-—]|$)".to_string(),
+                r"^\s*(?:第)?[零〇一二三四五六七八九十百千万两0-9]+回(?:\s|[:：\-—]|$)".to_string(),
+                r"^\s*Chapter\s+".to_string(),
+                r"^\s*Section\s+".to_string(),
+                r"^\s*Part\s+".to_string(),
+                r"^\s*番外(?:\s|[:：\-—]|$)".to_string(),
+                r"^\s*序(?:章)?(?:\s|[:：\-—]|$)".to_string(),
+                r"^\s*尾声(?:\s|[:：\-—]|$)".to_string(),
+                r"^\s*后记(?:\s|[:：\-—]|$)".to_string(),
+                r"^\s*附录(?:\s|[:：\-—]|$)".to_string(),
+                r"^\s*正文(?:\s|[:：\-—]|$)".to_string(),
             ],
         }
     }
@@ -147,7 +145,8 @@ impl Default for ChapterNumberExtraction {
             rules: vec![
                 // 中文格式：第X章, X章, 第一章
                 ChapterNumberRule {
-                    pattern: "^(?:第)?([一二三四五六七八九十0-9]+)[章节卷张节]".to_string(),
+                    pattern: r"^\s*(?:第)?([零〇一二三四五六七八九十百千万两0-9]+)[章节卷节回]"
+                        .to_string(),
                     capture_group: 1,
                     number_type: "auto".to_string(),
                 },

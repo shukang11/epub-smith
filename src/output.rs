@@ -80,7 +80,7 @@ impl Output {
         let left_width = rows.iter().map(|(left, _)| left.len()).max().unwrap_or(0) + 2;
         let right_width = rows
             .iter()
-            .map(|(_, right)| format!("{}", right).len())
+            .map(|(_, right)| format!("{right}").len())
             .max()
             .unwrap_or(0)
             + 2;
@@ -105,13 +105,7 @@ impl Output {
         ));
 
         for (left, right) in rows {
-            self.debug(format!(
-                "  │ {:<width$} │ {:<width2$} │",
-                left,
-                right,
-                width = left_width,
-                width2 = right_width
-            ));
+            self.debug(format!("  │ {left:<left_width$} │ {right:<right_width$} │"));
         }
 
         self.debug(format!(

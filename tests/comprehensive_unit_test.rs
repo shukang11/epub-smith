@@ -15,6 +15,8 @@ fn test_chinese_number_conversion() {
     assert_eq!(convert_chinese_to_arabic("一"), Some(1));
     assert_eq!(convert_chinese_to_arabic("二"), Some(2));
     assert_eq!(convert_chinese_to_arabic("九"), Some(9));
+    assert_eq!(convert_chinese_to_arabic("〇"), Some(0));
+    assert_eq!(convert_chinese_to_arabic("两"), Some(2));
 
     // 测试复杂中文数字
     assert_eq!(convert_chinese_to_arabic("十"), Some(10));
@@ -25,6 +27,7 @@ fn test_chinese_number_conversion() {
     assert_eq!(convert_chinese_to_arabic("一百零一"), Some(101));
     assert_eq!(convert_chinese_to_arabic("二百三十"), Some(230));
     assert_eq!(convert_chinese_to_arabic("一千二百三十四"), Some(1234));
+    assert_eq!(convert_chinese_to_arabic("两百"), Some(200));
 
     // 测试无法识别的中文数字
     assert_eq!(convert_chinese_to_arabic("未知"), None);
@@ -126,7 +129,15 @@ fn test_chapter_number_extraction() {
     assert_eq!(extract_chapter_number("第10章", &None), Some(10));
     assert_eq!(extract_chapter_number("第1节", &None), Some(1));
     assert_eq!(extract_chapter_number("第1卷", &None), Some(1));
-    assert_eq!(extract_chapter_number("第1张", &None), Some(1));
+    assert_eq!(extract_chapter_number("第1回", &None), Some(1));
+    assert_eq!(extract_chapter_number("第1张", &None), None);
+    assert_eq!(extract_chapter_number("第一百章", &None), Some(100));
+    assert_eq!(extract_chapter_number("第四百八十章", &None), Some(480));
+    assert_eq!(extract_chapter_number("第两百章", &None), Some(200));
+    assert_eq!(
+        extract_chapter_number("一张张截图，迅速密集发出来。", &None),
+        None
+    );
 
     // 测试默认规则下的英文数字提取
     assert_eq!(extract_chapter_number("Chapter 1", &None), Some(1));

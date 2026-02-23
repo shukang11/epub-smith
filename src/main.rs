@@ -25,8 +25,12 @@ use rust_i18n::t;
 use epub_smith::output::GLOBAL_OUTPUT;
 use epub_smith::utils::coherence::check_chapter_coherence;
 use epub_smith::{
-    cli::{Args, Commands, ConvertArgs, PreviewCommands, SnapshotCommands, TemplateCommands},
+    cli::{
+        Args, Commands, ConvertArgs, DoctorArgs, PreviewCommands, SnapshotCommands,
+        TemplateCommands,
+    },
     config::Config,
+    doctor::{analyze_book, build_recommended_commands},
     export::export_template,
     packager::package_epub,
     parser::parse_txt,
@@ -175,6 +179,163 @@ fn main() -> Result<()> {
         Commands::Preview(PreviewCommands::DryRun(preview_args)) => {
             handle_preview_dryrun_command(preview_args.input, preview_args.rules, args.debug)?;
         }
+        Commands::Doctor(doctor_args) => {
+            handle_doctor_command(doctor_args, args.debug)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// 处理 doctor 命令
+fn handle_doctor_command(args: DoctorArgs, debug: bool) -> Result<()> {
+    let use_stdin = !args.input.is_empty() && args.input[0].to_string_lossy() == "-";
+    if args.input.is_empty() && !use_stdin {
+        anyhow::bail!("No input files provided");
+    }
+
+    let total_start = std::time::Instant::now();
+    let config = Config::from_doctor_args(args.rules.clone(), args.encoding.clone())?;
+
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_message("诊断中：正在解析文本与章节...");
+    spinner.enable_steady_tick(Duration::from_millis(120));
+
+    let parse_start = std::time::Instant::now();
+    let mut book =
+        parse_txt(&args.input, &config).with_context(|| "Failed to parse input files")?;
+    let parse_duration = parse_start.elapsed();
+
+    spinner.finish_with_message("诊断解析完成");
+    book.meta = config.merge_preview_meta(book.meta.title.as_str());
+
+    let report = analyze_book(&book, &config.rules, args.max_samples);
+
+    GLOBAL_OUTPUT.title("Doctor 诊断报告");
+    GLOBAL_OUTPUT.empty_line();
+    GLOBAL_OUTPUT.info(format!(
+        "输入文件：{}",
+        args.input
+            .iter()
+            .map(|path| path.display().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    GLOBAL_OUTPUT.info(format!("章节总数：{}", report.total_chapters));
+    GLOBAL_OUTPUT.info(format!(
+        "可提取章节号：{}，无章节号：{}",
+        report.numbered_chapters, report.unnumbered_chapters
+    ));
+    GLOBAL_OUTPUT.info(format!(
+        "重复章节号：{}，顺序异常：{}",
+        report.duplicate_count, report.order_issue_count
+    ));
+    GLOBAL_OUTPUT.empty_line();
+
+    GLOBAL_OUTPUT.bold("分类结果");
+    if report.has_data_anomalies() {
+        GLOBAL_OUTPUT.warning("1) 源文本数据异常：存在重复或倒序章节号");
+    } else {
+        GLOBAL_OUTPUT.success("1) 源文本数据异常：未发现明显重复/倒序章节号");
+    }
+
+    if report.has_rule_or_parsing_risk() {
+        GLOBAL_OUTPUT.warning("2) 规则/解析风险：存在潜在误判或漏判风险");
+    } else {
+        GLOBAL_OUTPUT.success("2) 规则/解析风险：未发现明显风险");
+    }
+    GLOBAL_OUTPUT.empty_line();
+
+    if report.rule_risks.contains_zhang_unit {
+        GLOBAL_OUTPUT.warning("规则风险：当前规则包含“张”单位，容易把正文误判成章节标题");
+    }
+    if report.rule_risks.missing_large_chinese_number_support {
+        GLOBAL_OUTPUT.warning("规则风险：中文数字模式可能缺少“百/千/万”，可能导致大章节号漏识别");
+    }
+    if !report.suspicious_title_samples.is_empty() {
+        GLOBAL_OUTPUT.warning(format!(
+            "解析风险：检测到 {} 条疑似误判标题样本",
+            report.suspicious_title_samples.len()
+        ));
+    }
+    if !report.long_chapter_samples.is_empty() {
+        GLOBAL_OUTPUT.warning(format!(
+            "解析风险：检测到 {} 条超长章节样本（可能存在漏分）",
+            report.long_chapter_samples.len()
+        ));
+    }
+    if report.rule_risks.contains_zhang_unit
+        || report.rule_risks.missing_large_chinese_number_support
+        || !report.suspicious_title_samples.is_empty()
+        || !report.long_chapter_samples.is_empty()
+    {
+        GLOBAL_OUTPUT.empty_line();
+    }
+
+    if !report.duplicate_samples.is_empty() {
+        GLOBAL_OUTPUT.bold("重复章节号样本");
+        for issue in &report.duplicate_samples {
+            GLOBAL_OUTPUT.info(format!(
+                "- 第{}：\"{}\" ({}) <-> \"{}\" ({})",
+                issue.number,
+                issue.first.title,
+                issue.first.line_range(),
+                issue.second.title,
+                issue.second.line_range()
+            ));
+        }
+        GLOBAL_OUTPUT.empty_line();
+    }
+
+    if !report.order_samples.is_empty() {
+        GLOBAL_OUTPUT.bold("章节号顺序异常样本");
+        for issue in &report.order_samples {
+            GLOBAL_OUTPUT.info(format!(
+                "- 第{} -> 第{}：\"{}\" ({}) -> \"{}\" ({})",
+                issue.previous_number,
+                issue.current_number,
+                issue.previous.title,
+                issue.previous.line_range(),
+                issue.current.title,
+                issue.current.line_range()
+            ));
+        }
+        GLOBAL_OUTPUT.empty_line();
+    }
+
+    if !report.suspicious_title_samples.is_empty() {
+        GLOBAL_OUTPUT.bold("疑似误判标题样本");
+        for sample in &report.suspicious_title_samples {
+            GLOBAL_OUTPUT.info(format!("- \"{}\" ({})", sample.title, sample.line_range()));
+        }
+        GLOBAL_OUTPUT.empty_line();
+    }
+
+    if !report.long_chapter_samples.is_empty() {
+        GLOBAL_OUTPUT.bold("超长章节样本");
+        for sample in &report.long_chapter_samples {
+            GLOBAL_OUTPUT.info(format!(
+                "- \"{}\" ({}，约 {} 行)",
+                sample.chapter.title,
+                sample.chapter.line_range(),
+                sample.line_count
+            ));
+        }
+        GLOBAL_OUTPUT.empty_line();
+    }
+
+    GLOBAL_OUTPUT.bold("建议下一步命令");
+    for command in build_recommended_commands(&args.input, args.rules.as_deref(), &report) {
+        GLOBAL_OUTPUT.info(format!("- {command}"));
+    }
+    GLOBAL_OUTPUT.empty_line();
+
+    if debug {
+        let metrics = [
+            ("Text parsing", parse_duration),
+            ("Total time", total_start.elapsed()),
+        ];
+        GLOBAL_OUTPUT.performance_summary("=== Performance Summary ===", &metrics);
     }
 
     Ok(())

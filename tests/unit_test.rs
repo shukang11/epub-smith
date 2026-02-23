@@ -4,13 +4,18 @@ use regex::Regex;
 fn test_chinese_to_arabic() {
     // 直接调用二进制文件的函数可能比较复杂，我们可以测试正则表达式的功能
     // 测试中文数字提取
-    let regex = Regex::new(r"^(?:第)?([一二三四五六七八九十0-9]+)[章节张卷]").unwrap();
+    let regex =
+        Regex::new(r"^\s*(?:第)?([零〇一二三四五六七八九十百千万两0-9]+)[章节卷回]").unwrap();
 
     assert!(regex.is_match("第1章"));
     assert!(regex.is_match("1章"));
     assert!(regex.is_match("第一章"));
     assert!(regex.is_match("第十章"));
     assert!(regex.is_match("第10章"));
+    assert!(regex.is_match("第一百章"));
+    assert!(regex.is_match("第四百八十章"));
+    assert!(regex.is_match("第两百章"));
+    assert!(!regex.is_match("一张张截图，迅速密集发出来。"));
 }
 
 #[test]

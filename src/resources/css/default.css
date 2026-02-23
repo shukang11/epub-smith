@@ -31,9 +31,9 @@
  *   - "Noto Serif CJK SC": Google Noto 衬线中文字体
  *   - serif: 通用衬线字体后备
  * 
- * font-size: 基础字体大小（16px 是标准阅读大小）
+ * font-size: 基础字体大小（17-18px 是更舒适的阅读大小）
  * 
- * line-height: 行高（1.5-1.8 推荐，1.5 是默认，1.8 更宽松）
+ * line-height: 行高（1.6-1.9 推荐，1.8 是更舒适的阅读设置）
  * 
  * color: 文字颜色（#000000 纯黑，可改为 #333333 浅黑更护眼）
  * 
@@ -43,8 +43,8 @@
  */
 body {
     font-family: "SimSun", "Songti SC", "STSong", "AR PL SungtiL GB", "Noto Serif CJK SC", serif;
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: 18px;
+    line-height: 1.8;
     color: #000000;
     background-color: #ffffff;
     margin: 0;
@@ -77,17 +77,17 @@ body {
  * 
  * text-align: center 居中对齐
  * 
- * margin: 外边距（上下 40px，左右 0，底部 30px）
+ * margin: 外边距（上 1.8em，下 1.2em，左右 0）
  * 
  * padding-bottom: 底部内边距（标题下方的空白）
  * 
  * border-bottom: 底部边框（1px 实线灰色）
  */
 h1.chapter-title {
-    font-size: 24px;
+    font-size: 1.45em;
     font-weight: bold;
     text-align: center;
-    margin: 40px 0 30px 0;
+    margin: 1.8em 0 1.2em 0;
     padding-bottom: 10px;
     border-bottom: 1px solid #cccccc;
 }
@@ -98,16 +98,19 @@ h1.chapter-title {
  * 
  * text-indent: 首行缩进（2em 等于两个汉字宽度，中文排版标准）
  * 
- * margin: 段落间距（上下 10px，左右 0）
+ * margin: 段落间距（中等：仅保留段后间距）
  * 
  * text-align: 两端对齐（justify 对中文很重要）
+ *
+ * white-space: pre-line 保留段内换行，避免整章挤成一段
  * 
  * 【提示】如果不喜欢首行缩进，可以设置为 0
  */
 p.chapter-content {
     text-indent: 2em;
-    margin: 10px 0;
+    margin: 0 0 0.95em 0;
     text-align: justify;
+    white-space: pre-line;
 }
 
 /* ========== 目录导航样式 ========== */
