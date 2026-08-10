@@ -6,6 +6,7 @@ use tera::{Context as TeraContext, Tera};
 
 use crate::{
     config::Config,
+    cover::generate_cover,
     models::{Book, Chapter},
 };
 
@@ -22,6 +23,45 @@ pub fn render_book(book: &Book, config: &Config) -> Result<Vec<PathBuf>> {
     let _ = temp_dir.keep();
 
     let mut xhtml_files = Vec::new();
+
+    // 处理封面：自动生成默认封面，或复制用户提供的封面图
+    let cover: Option<PathBuf> = if config.generate_cover {
+        let cover_path = temp_path.join("cover.png");
+        generate_cover(&book.meta, &cover_path)?;
+        crate::output::GLOBAL_OUTPUT.info(t!("info-cover-auto-generated"));
+        xhtml_files.push(cover_path.clone());
+        Some(cover_path)
+    } else if let Some(cover_path) = &book.meta.cover {
+        let cover_ext = cover_path
+            .extension()
+            .and_then(|os_str| os_str.to_str())
+            .unwrap_or("png");
+        let cover_filename = format!("cover.{cover_ext}");
+        let dest_cover_path = temp_path.join(&cover_filename);
+        std::fs::copy(cover_path, &dest_cover_path).with_context(|| {
+            format!(
+                "Failed to copy cover image from {} to {}",
+                cover_path.display(),
+                dest_cover_path.display()
+            )
+        })?;
+        xhtml_files.push(dest_cover_path.clone());
+        Some(dest_cover_path)
+    } else {
+        None
+    };
+
+    // 封面页（放 spine 首位，兼容 Kindle 等阅读器）
+    if let Some(cover_path) = &cover {
+        let cover_file = cover_path
+            .file_name()
+            .and_then(|os_str| os_str.to_str())
+            .unwrap_or("cover.png")
+            .to_string();
+        let cover_page_path = temp_path.join("cover.xhtml");
+        render_cover_page(&cover_file, &tera, &cover_page_path)?;
+        xhtml_files.push(cover_page_path);
+    }
 
     // 渲染每个章节
     for (i, chapter) in book.chapters.iter().enumerate() {
@@ -42,7 +82,7 @@ pub fn render_book(book: &Book, config: &Config) -> Result<Vec<PathBuf>> {
 
     // 渲染OPF文件
     let opf_path = temp_path.join("content.opf");
-    render_opf(book, &xhtml_files, &tera, &opf_path)?;
+    render_opf(book, &xhtml_files, cover.as_ref(), &tera, &opf_path)?;
     xhtml_files.push(opf_path);
 
     // 渲染mimetype文件
@@ -55,25 +95,6 @@ pub fn render_book(book: &Book, config: &Config) -> Result<Vec<PathBuf>> {
     std::fs::create_dir_all(temp_path.join("META-INF"))?;
     render_container(&container_path)?;
     xhtml_files.push(container_path);
-
-    // 处理封面图片
-    if let Some(cover_path) = &book.meta.cover {
-        let cover_ext = cover_path
-            .extension()
-            .and_then(|os_str| os_str.to_str())
-            .unwrap_or("png");
-
-        let cover_filename = format!("cover.{cover_ext}");
-        let dest_cover_path = temp_path.join(&cover_filename);
-        std::fs::copy(cover_path, &dest_cover_path).with_context(|| {
-            format!(
-                "Failed to copy cover image from {} to {}",
-                cover_path.display(),
-                dest_cover_path.display()
-            )
-        })?;
-        xhtml_files.push(dest_cover_path);
-    }
 
     Ok(xhtml_files)
 }
@@ -91,6 +112,9 @@ pub fn initialize_tera() -> Result<Tera> {
 
     // 添加导航模板
     tera.add_raw_template("nav.xhtml", include_str!("../templates/nav.xhtml.tera"))?;
+
+    // 添加封面页模板
+    tera.add_raw_template("cover.xhtml", include_str!("../templates/cover.xhtml.tera"))?;
 
     // 添加OPF模板
     tera.add_raw_template("content.opf", include_str!("../templates/content.opf.tera"))?;
@@ -132,24 +156,27 @@ pub fn render_nav(book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()>
 pub fn render_opf(
     book: &Book,
     xhtml_files: &[PathBuf],
+    cover: Option<&PathBuf>,
     tera: &Tera,
     output_path: &PathBuf,
 ) -> Result<()> {
     let mut context = TeraContext::new();
     context.insert("book", book);
 
-    // 收集所有XHTML文件的文件名
+    // 收集所有XHTML文件的文件名（排除 nav.xhtml，它单独声明 properties="nav"）
     let xhtml_filenames: Vec<String> = xhtml_files
         .iter()
         .filter(|path| path.extension().map(|ext| ext == "xhtml").unwrap_or(false))
+        .filter(|path| path.file_name().and_then(|os_str| os_str.to_str()) != Some("nav.xhtml"))
         .filter_map(|path| path.file_name().and_then(|os_str| os_str.to_str()))
         .map(|filename| filename.to_string())
         .collect();
 
     context.insert("xhtml_files", &xhtml_filenames);
+    context.insert("cover_present", &cover.is_some());
 
     // 处理封面文件名
-    let cover_item = if let Some(cover_path) = &book.meta.cover {
+    let cover_item = if let Some(cover_path) = cover {
         let cover_ext = cover_path
             .extension()
             .and_then(|os_str| os_str.to_str())
@@ -162,7 +189,11 @@ pub fn render_opf(
             _ => "image/png",
         };
 
-        let filename = format!("cover.{cover_ext}");
+        let filename = cover_path
+            .file_name()
+            .and_then(|os_str| os_str.to_str())
+            .unwrap_or("cover.png")
+            .to_string();
         Some(format!(
             r#"        <item href="{filename}" id="cover-image" media-type="{media_type}" properties="cover-image" />"#
         ))
@@ -172,6 +203,17 @@ pub fn render_opf(
     context.insert("cover_item", &cover_item);
 
     let rendered = tera.render("content.opf", &context)?;
+    std::fs::write(output_path, rendered)?;
+
+    Ok(())
+}
+
+/// 渲染封面页（spine 首项，兼容 Kindle 等阅读器的封面显示）
+pub fn render_cover_page(cover_file: &str, tera: &Tera, output_path: &PathBuf) -> Result<()> {
+    let mut context = TeraContext::new();
+    context.insert("cover_file", cover_file);
+
+    let rendered = tera.render("cover.xhtml", &context)?;
     std::fs::write(output_path, rendered)?;
 
     Ok(())

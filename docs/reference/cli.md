@@ -76,7 +76,7 @@ epub-smith convert <INPUT> [OPTIONS]
 | `--encoding` | `-e` | 字符串 | 强制输入文件编码 | 自动探测 |
 | `--title` | - | 字符串 | 指定书名 | 从文件名获取 |
 | `--author` | - | 字符串 | 指定作者 | `Unknown` |
-| `--cover` | - | 文件路径 | 指定封面图片路径 | - |
+| `--cover` | - | 路径或 `auto` | 指定封面图片路径，或 `auto` 自动生成默认封面 | - |
 | `--language` | - | 字符串 | 指定书籍语言 | `zh-CN` |
 | `--check` | - | 标志 | 调用 epubcheck 校验 | `false` |
 | `--style` | - | 文件路径 | 指定自定义 CSS 样式文件 | - |
@@ -98,6 +98,9 @@ epub-smith convert my_book.txt -r rules.toml
 
 # 从 STDIN 读取
 cat book.txt | epub-smith convert - -o book.epub
+
+# 自动生成默认封面（离线 SVG 渲染，无网络/模型依赖）
+epub-smith convert my_book.txt --cover auto
 ```
 
 ### template export - 导出模板
@@ -117,6 +120,7 @@ epub-smith template-export my_templates
 这将导出以下文件：
 - `style.css` - 样式文件，可编辑修改
 - `preview.html` - 预览文件，可在浏览器中打开
+- `cover.svg` - 封面模板（`--cover auto` 使用），可编辑配色与装饰
 - `README.md` - 使用说明
 
 ### snapshot save - 保存快照
@@ -175,6 +179,7 @@ epub-smith snapshot-load <FILE> [OPTIONS]
 | `--language` | - | 字符串 | 指定语言 | `zh-CN` |
 | `--check` | - | 标志 | 调用 epubcheck 校验 | `false` |
 | `--style` | - | 文件路径 | 指定 CSS 样式文件 | - |
+| `--cover` | - | 路径或 `auto` | 封面图片路径，或 `auto` 自动生成默认封面 | - |
 
 **示例：**
 

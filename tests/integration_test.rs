@@ -522,3 +522,150 @@ fn test_snapshot_with_input_files_error() {
 //         .success()
 //         .stdout(predicate::str::contains("使用的章节正则表达式："));
 // }
+
+#[test]
+fn test_auto_cover_generates_cover_png() {
+    // 创建测试内容
+    let content = r#"第1章
+这是第一章
+
+第2章
+这是第二章"#;
+    let temp_file = tempfile::NamedTempFile::new().unwrap();
+    std::fs::write(temp_file.path(), content).unwrap();
+
+    let output_path = temp_file.path().with_extension("epub");
+    let output_str = output_path.to_str().unwrap();
+
+    // --cover auto 生成默认封面
+    let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
+    cmd.arg("convert")
+        .arg(temp_file.path())
+        .arg("--cover")
+        .arg("auto")
+        .arg("-o")
+        .arg(output_str);
+    cmd.assert().success();
+
+    // 验证 EPUB 是合法 zip 且包含封面图片与封面页
+    let file = std::fs::File::open(output_str).unwrap();
+    let mut archive = zip::ZipArchive::new(file).unwrap();
+    let names: Vec<String> = archive.file_names().map(|s| s.to_string()).collect();
+    assert!(
+        names.contains(&"cover.png".to_string()),
+        "EPUB 应包含 cover.png，实际: {names:?}"
+    );
+    assert!(
+        names.contains(&"cover.xhtml".to_string()),
+        "EPUB 应包含封面页 cover.xhtml，实际: {names:?}"
+    );
+
+    // cover.png 必须是合法 PNG
+    {
+        let mut cover_png = archive.by_name("cover.png").unwrap();
+        let mut head = [0u8; 8];
+        std::io::Read::read_exact(&mut cover_png, &mut head).unwrap();
+        assert_eq!(&head, b"\x89PNG\r\n\x1a\n", "cover.png 不是合法 PNG");
+    }
+
+    // OPF 必须声明封面图片与封面页
+    let mut opf = archive.by_name("content.opf").unwrap();
+    let mut opf_content = String::new();
+    std::io::Read::read_to_string(&mut opf, &mut opf_content).unwrap();
+    assert!(
+        opf_content.contains("properties=\"cover-image\""),
+        "OPF 缺少 cover-image 声明"
+    );
+    assert!(
+        opf_content.contains("id=\"cover-image\""),
+        "OPF 缺少封面 item id"
+    );
+    assert!(
+        opf_content.contains("image/png"),
+        "OPF 封面 media-type 应为 image/png"
+    );
+    assert!(
+        opf_content.contains("name=\"cover\" content=\"cover-image\""),
+        "OPF metadata 应声明封面关联"
+    );
+    assert!(
+        opf_content.contains("href=\"cover.xhtml\""),
+        "OPF manifest 应包含封面页"
+    );
+
+    // spine 首项引用封面页（manifest 第一项 = cover.xhtml = item-1）
+    let spine_start = opf_content.find("<spine>").unwrap();
+    let spine_end = opf_content.find("</spine>").unwrap();
+    let spine = &opf_content[spine_start..spine_end];
+    assert!(
+        spine.contains("itemref idref=\"item-1\""),
+        "spine 首项应为封面页，实际 spine: {spine}"
+    );
+
+    std::fs::remove_file(output_str).ok();
+}
+
+#[test]
+fn test_auto_cover_snapshot_load() {
+    // 创建测试内容并保存快照
+    let content = r#"第1章
+这是第一章
+
+第2章
+这是第二章"#;
+    let temp_file = tempfile::NamedTempFile::new().unwrap();
+    std::fs::write(temp_file.path(), content).unwrap();
+
+    let snapshot_path = tempfile::NamedTempFile::new().unwrap();
+    let snapshot_str = snapshot_path.path().to_str().unwrap();
+
+    let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
+    cmd.arg("snapshot")
+        .arg("save")
+        .arg(temp_file.path())
+        .arg("-o")
+        .arg(snapshot_str);
+    cmd.assert().success();
+
+    // snapshot load --cover auto 也应生成封面
+    let output_path = temp_file.path().with_extension("snap_epub");
+    let output_str = output_path.to_str().unwrap();
+
+    let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
+    cmd.arg("snapshot")
+        .arg("load")
+        .arg(snapshot_str)
+        .arg("--cover")
+        .arg("auto")
+        .arg("-o")
+        .arg(output_str);
+    cmd.assert().success();
+
+    let file = std::fs::File::open(output_str).unwrap();
+    let archive = zip::ZipArchive::new(file).unwrap();
+    let names: Vec<String> = archive.file_names().map(|s| s.to_string()).collect();
+    assert!(
+        names.contains(&"cover.png".to_string()),
+        "snapshot load --cover auto 应生成封面，实际: {names:?}"
+    );
+
+    std::fs::remove_file(output_str).ok();
+}
+
+#[test]
+fn test_template_export_includes_cover_svg() {
+    let export_dir = tempfile::tempdir().unwrap();
+    let export_str = export_dir.path().to_str().unwrap();
+
+    let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
+    cmd.arg("template").arg("export").arg(export_str);
+    cmd.assert().success();
+
+    let cover_svg_path = export_dir.path().join("cover.svg");
+    assert!(cover_svg_path.exists(), "template export 应包含 cover.svg");
+    let content = std::fs::read_to_string(&cover_svg_path).unwrap();
+    assert!(
+        content.contains("{{ title_lines }}") && content.contains("{{ author }}"),
+        "cover.svg 应包含占位符"
+    );
+}

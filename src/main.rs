@@ -13,6 +13,7 @@ struct SnapshotLoadArgs {
     language: String,
     check: bool,
     style: Option<std::path::PathBuf>,
+    cover: Option<String>,
     debug: bool,
 }
 
@@ -169,6 +170,7 @@ fn main() -> Result<()> {
                 language: snapshot_args.language,
                 check: snapshot_args.check,
                 style: snapshot_args.style,
+                cover: snapshot_args.cover,
                 debug: args.debug,
             };
             handle_snapshot_load_command(args)?;
@@ -438,7 +440,13 @@ fn handle_snapshot_save_command(
 fn handle_snapshot_load_command(args: SnapshotLoadArgs) -> Result<()> {
     // 开始总计时
     let total_start = std::time::Instant::now();
-    let config = Config::from_snapshot_load_args(args.output, args.rules, args.check, args.style)?;
+    let config = Config::from_snapshot_load_args(
+        args.output,
+        args.rules,
+        args.check,
+        args.style,
+        args.cover,
+    )?;
 
     // 读取并解析快照文件
     let spinner = ProgressBar::new_spinner();

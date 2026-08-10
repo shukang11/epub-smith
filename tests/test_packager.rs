@@ -128,6 +128,8 @@ fn test_package_epub() {
         explain: false,
         encoding: None,
         style: None,
+        cover: None,
+        generate_cover: false,
     };
 
     // 创建空的Book结构体
@@ -182,6 +184,8 @@ fn test_package_epub_with_check() {
         explain: false,
         encoding: None,
         style: None,
+        cover: None,
+        generate_cover: false,
     };
 
     // 创建空的Book结构体

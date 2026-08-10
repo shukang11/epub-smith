@@ -28,6 +28,16 @@ pub fn export_template(export_dir: &PathBuf) -> Result<()> {
     fs::write(&preview_path, &preview_content)
         .with_context(|| format!("Failed to write preview file: {}", preview_path.display()))?;
 
+    // 导出封面模板（--cover auto 使用）
+    let cover_svg_path = export_dir.join("cover.svg");
+    let cover_svg_content = include_str!("templates/cover.svg");
+    fs::write(&cover_svg_path, cover_svg_content).with_context(|| {
+        format!(
+            "Failed to write cover SVG file: {}",
+            cover_svg_path.display()
+        )
+    })?;
+
     let readme_path = export_dir.join("README.md");
     let readme_content = generate_readme();
     fs::write(&readme_path, readme_content)
@@ -37,6 +47,7 @@ pub fn export_template(export_dir: &PathBuf) -> Result<()> {
     GLOBAL_OUTPUT.info(t!("export-template-info"));
     GLOBAL_OUTPUT.info(t!("export-template-css"));
     GLOBAL_OUTPUT.info(t!("export-template-preview"));
+    GLOBAL_OUTPUT.info(t!("export-template-cover"));
     GLOBAL_OUTPUT.info(t!("export-template-readme"));
     GLOBAL_OUTPUT.info(format!("{} {}", t!("label-output"), export_dir.display()));
 

@@ -14,6 +14,7 @@ A predictable, explainable, and reusable TXT to EPUB CLI tool written in Rust.
 - **Performance Optimized**: Fast parsing and generation with performance metrics available
 - **Debugging Tools**: Dry run mode, chapter outline preview, and detailed performance analysis
 - **Custom Styling**: Support for custom CSS styles
+- **Default Cover Generation**: Generate a default book cover offline via `--cover auto` (SVG template rendered to PNG, no network or AI model required)
 - **EPUB Validation**: Optional integration with epubcheck for validation
 - **Multiple Input Files**: Merge multiple TXT files into a single EPUB book
 - **STDIN Support**: Read input from standard input for pipeline workflows
@@ -71,6 +72,16 @@ epub-smith convert my_book.txt -o my_custom_book.epub
 ```bash
 epub-smith convert my_book.txt --author "John Doe" --title "My Book"
 ```
+
+### Generate a Default Cover (Offline)
+
+No network or AI model needed — an SVG template is rendered to a PNG cover:
+
+```bash
+epub-smith convert my_book.txt --cover auto
+```
+
+The cover uses the book title and author. You can edit the template via `template export` (see `cover.svg`).
 
 ### Preview Chapters (Dry Run)
 
@@ -199,7 +210,7 @@ epub-smith [GLOBAL OPTIONS] <SUBCOMMAND> [SUBCOMMAND OPTIONS]
 | `-e, --encoding <ENCODING>` | Force input file encoding |
 | `--title <TITLE>` | Specify book title |
 | `--author <AUTHOR>` | Specify book author |
-| `--cover <FILE>` | Specify cover image path |
+| `--cover <FILE\|auto>` | Cover image path, or `auto` to generate a default cover offline |
 | `--language <LANGUAGE>` | Specify book language [default: zh-CN] |
 | `--check` | Validate EPUB with epubcheck |
 | `--style <FILE>` | Specify custom CSS style file |

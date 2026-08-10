@@ -104,6 +104,8 @@ fn test_render_book() {
         explain: false,
         encoding: None,
         style: None,
+        cover: None,
+        generate_cover: false,
     };
 
     // 测试渲染书籍
@@ -284,7 +286,7 @@ fn test_render_opf() {
     let opf_path = temp_dir.path().join("content.opf");
 
     // 测试渲染OPF
-    let result = renderer::render_opf(&book, &xhtml_files, &tera, &opf_path);
+    let result = renderer::render_opf(&book, &xhtml_files, None, &tera, &opf_path);
     assert!(result.is_ok());
 
     // 验证文件内容

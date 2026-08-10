@@ -168,7 +168,7 @@ pub fn analyze_book(book: &Book, rules: &Rules, max_samples: usize) -> DoctorRep
         })
         .collect();
 
-    long_chapter_samples.sort_by(|a, b| b.line_count.cmp(&a.line_count));
+    long_chapter_samples.sort_by_key(|b| std::cmp::Reverse(b.line_count));
     long_chapter_samples.truncate(sample_limit);
 
     let rule_risks = detect_rule_risks(rules);

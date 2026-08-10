@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>Cover</title>
+</head>
+<body style="margin: 0; text-align: center;">
+    <img src="{{ cover_file }}" alt="Cover" />
+</body>
+</html>

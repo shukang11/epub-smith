@@ -22,6 +22,10 @@ pub struct Config {
     pub encoding: Option<String>,
     /// 自定义CSS样式文件路径
     pub style: Option<PathBuf>,
+    /// 封面图片路径（--cover 非 auto 时）
+    pub cover: Option<PathBuf>,
+    /// 自动生成默认封面（--cover auto）
+    pub generate_cover: bool,
 }
 
 impl Config {
@@ -66,6 +70,12 @@ impl Config {
             args.output.clone()
         };
 
+        // 解析封面参数：auto 表示自动生成默认封面
+        let (cover, generate_cover) = match args.cover.as_deref() {
+            Some("auto") => (None, true),
+            other => (other.map(PathBuf::from), false),
+        };
+
         Ok(Self {
             rules,
             output,
@@ -73,6 +83,8 @@ impl Config {
             explain: false, // convert命令中移除了explain选项
             encoding: args.encoding.clone(),
             style: args.style.clone(),
+            cover,
+            generate_cover,
         })
     }
 
@@ -92,6 +104,8 @@ impl Config {
             explain: false,
             encoding: None,
             style: None,
+            cover: None,
+            generate_cover: false,
         })
     }
 
@@ -101,12 +115,19 @@ impl Config {
         rules: Option<PathBuf>,
         check: bool,
         style: Option<PathBuf>,
+        cover: Option<String>,
     ) -> Result<Self> {
         // 加载规则文件或使用默认规则
         let rules = if let Some(rules_path) = rules {
             Config::load_rules(&rules_path)?
         } else {
             Rules::default()
+        };
+
+        // 解析封面参数：auto 表示自动生成默认封面
+        let (cover, generate_cover) = match cover.as_deref() {
+            Some("auto") => (None, true),
+            other => (other.map(PathBuf::from), false),
         };
 
         Ok(Self {
@@ -116,6 +137,8 @@ impl Config {
             explain: false,
             encoding: None,
             style,
+            cover,
+            generate_cover,
         })
     }
 
@@ -135,6 +158,8 @@ impl Config {
             explain: false,
             encoding: None,
             style: None,
+            cover: None,
+            generate_cover: false,
         })
     }
 
@@ -153,6 +178,8 @@ impl Config {
             explain: false,
             encoding,
             style: None,
+            cover: None,
+            generate_cover: false,
         })
     }
 
@@ -167,6 +194,8 @@ impl Config {
             explain: false,
             encoding: None,
             style: None,
+            cover: None,
+            generate_cover: false,
         })
     }
 
@@ -204,7 +233,7 @@ impl Config {
             meta.language = args.language.clone();
         }
 
-        if let Some(cover) = &args.cover {
+        if let Some(cover) = &self.cover {
             meta.cover = Some(cover.clone());
         }
 
@@ -277,6 +306,10 @@ impl Config {
 
         if meta.language.is_empty() {
             meta.language = language.to_string();
+        }
+
+        if let Some(cover) = &self.cover {
+            meta.cover = Some(cover.clone());
         }
 
         // 如果没有提供标识符，生成一个新的UUID

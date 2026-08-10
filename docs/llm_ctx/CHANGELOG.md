@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+- 新增默认封面生成（`--cover auto`）
+  - 离线 SVG 模板 → resvg 栅格化为 PNG，无网络与模型依赖，可预测输出
+  - 书名/作者自动填充（书名自动切行，最多 3 行）；`snapshot load` 同样支持
+  - 补 `cover.xhtml` 封面页并置于 spine 首位，兼容 Kindle 等对纯 manifest 声明支持不稳的阅读器
+  - `template export` 附带导出可编辑的 `cover.svg` 封面模板
+  - 修复 OPF manifest 中 `nav.xhtml` 被重复声明（普通 item + properties="nav"）的问题
 - 命令行子命令优化：重构为清晰的子命令结构
   - `convert`：TXT转EPUB的主要命令
   - `preview-outline`：打印章节大纲

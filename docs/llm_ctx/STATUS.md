@@ -33,6 +33,11 @@
   - 默认禁用“张”单位，降低正文误判为章节的风险
   - 默认支持 `百/千/万/零/〇/两` 等中文大数字章节
   - 默认章节单位调整为 `章/节/卷/回`，源文本错号仍仅告警不自动修复
+- 新增默认封面生成（`--cover auto`）
+  - 离线 SVG 模板 → resvg 栅格化 PNG，无网络/模型依赖
+  - 兼容 Kindle/部分阅读器：补 cover.xhtml 封面页并置于 spine 首位
+  - `template export` 附带导出可编辑的 `cover.svg` 模板
+  - 修复 OPF manifest 中 nav.xhtml 重复声明问题
 
 ## 当前重点
 

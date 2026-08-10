@@ -49,4 +49,8 @@ export-template-success: "✓ 模板导出成功！"
 export-template-info: "导出的文件："
 export-template-css: "- style.css：样式文件，可编辑修改"
 export-template-preview: "- preview.html：预览文件，可在浏览器中打开"
+export-template-cover: "- cover.svg：封面模板（--cover auto 使用），可编辑配色与装饰"
 export-template-readme: "- README.md：使用说明"
+
+# Cover generation messages
+info-cover-auto-generated: "ℹ️ 已生成默认封面（--cover auto）"

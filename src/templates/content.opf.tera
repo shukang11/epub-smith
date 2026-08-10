@@ -6,7 +6,7 @@
         <dc:language>{{ book.meta.language }}</dc:language>
         <dc:identifier id="pub-id">{{ book.meta.identifier }}</dc:identifier>
         <dc:modified>{{ book.meta.modified }}</dc:modified>
-        {% if book.meta.cover %}
+        {% if cover_present %}
         <meta name="cover" content="cover-image" />
         {% endif %}
     </metadata>

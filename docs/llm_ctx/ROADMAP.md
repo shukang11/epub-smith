@@ -9,6 +9,12 @@
 - 交互式规则生成：添加向导式规则生成功能
 - 并行处理：对于大文件，考虑并行处理章节
 
+## 中期（3-6 个迭代）
+
+- 封面自定义模板接线：`--cover-template <FILE>`，让 `template export` 导出的 `cover.svg` 真正作为生成源（当前为参考副本）
+- 封面参数可配置：尺寸、书名单行字符数/行数、字体族、配色（`--cover-size` 或 rules `[cover]` 段）
+- 生图服务接入：支持 comfyui 等生图服务作为封面来源（如 `--cover comfyui:<配置>`）
+  - 演进路径：将封面来源收敛为 `CoverSource` 枚举（`None | File | Auto | Remote`），`generate_cover` 保持"产出 PNG"抽象不变，仅新增 `Remote` 变体与调用分支
 
 ## 长期（半年及以后）
 

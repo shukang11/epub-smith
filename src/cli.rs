@@ -116,9 +116,9 @@ pub struct ConvertArgs {
     #[arg(long = "author", value_name = "AUTHOR")]
     pub author: Option<String>,
 
-    /// 指定封面图片路径
-    #[arg(long = "cover", value_name = "COVER")]
-    pub cover: Option<PathBuf>,
+    /// 指定封面图片路径，或 auto 自动生成默认封面
+    #[arg(long = "cover", value_name = "COVER", value_parser = clap::builder::NonEmptyStringValueParser::new())]
+    pub cover: Option<String>,
 
     /// 指定书籍语言
     #[arg(long = "language", value_name = "LANGUAGE", default_value = "zh-CN")]
@@ -183,6 +183,10 @@ pub struct SnapshotLoadArgs {
     /// Specify custom CSS style file
     #[arg(long = "style", value_name = "CSS_FILE")]
     pub style: Option<PathBuf>,
+
+    /// Cover image path or "auto" to generate a default cover
+    #[arg(long = "cover", value_name = "COVER")]
+    pub cover: Option<String>,
 }
 
 /// Arguments for preview commands

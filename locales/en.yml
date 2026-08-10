@@ -49,4 +49,8 @@ export-template-success: "✓ Template exported successfully!"
 export-template-info: "Exported files:"
 export-template-css: "- style.css: style file, can be edited"
 export-template-preview: "- preview.html: preview file, can be opened in browser"
+export-template-cover: "- cover.svg: cover template (used by --cover auto), editable colors and decorations"
 export-template-readme: "- README.md: usage instructions"
+
+# Cover generation messages
+info-cover-auto-generated: "ℹ️ Default cover generated (--cover auto)"
