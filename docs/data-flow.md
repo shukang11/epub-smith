@@ -41,11 +41,11 @@ flowchart TD
     B --> C{子命令类型?}
     
     C -->|convert| D[处理转换命令]
-    C -->|preview-dry-run| E[处理预览详情命令]
-    C -->|preview-outline| F[处理大纲预览命令]
-    C -->|snapshot-save| G[处理快照保存命令]
-    C -->|snapshot-load| H[处理快照加载命令]
-    C -->|template-export| I[处理模板导出命令]
+    C -->|preview dry-run| E[处理预览详情命令]
+    C -->|preview outline| F[处理大纲预览命令]
+    C -->|snapshot save| G[处理快照保存命令]
+    C -->|snapshot load| H[处理快照加载命令]
+    C -->|template export| I[处理模板导出命令]
     
     D --> J[加载配置和规则]
     E --> J
@@ -54,16 +54,16 @@ flowchart TD
     H --> J
     
     J -->|convert| K[解析输入文件]
-    J -->|preview-dry-run| K
-    J -->|preview-outline| K
-    J -->|snapshot-save| K
-    J -->|snapshot-load| L[加载快照文件]
-    J -->|template-export| M[导出模板文件]
+    J -->|preview dry-run| K
+    J -->|preview outline| K
+    J -->|snapshot save| K
+    J -->|snapshot load| L[加载快照文件]
+    J -->|template export| M[导出模板文件]
     
     K -->|convert| N[渲染XHTML]
-    K -->|preview-dry-run| O[显示详细章节结构]
-    K -->|preview-outline| P[输出章节大纲]
-    K -->|snapshot-save| Q[保存章节快照]
+    K -->|preview dry-run| O[显示详细章节结构]
+    K -->|preview outline| P[输出章节大纲]
+    K -->|snapshot save| Q[保存章节快照]
     
     N --> R[打包EPUB]
     R --> S{--check?}
@@ -84,7 +84,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A[开始转换流程] --> B[加载配置和规则]
-    B --> C{规则文件存在?}
+    B --> C{"规则文件存在?"}
     C -->|是| D[加载规则文件]
     C -->|否| E[使用默认规则]
     D --> F[解析输入文件]
@@ -106,7 +106,7 @@ flowchart TD
     B -->|不存在| C[使用默认规则]
     B -->|存在| D[读取规则文件内容]
     D --> E[解析TOML内容]
-    E --> F{解析成功?}
+    E --> F{"解析成功?"}
     F -->|否| G[返回错误]
     F -->|是| H[合并命令行参数与规则]
     C --> I[返回规则对象]
@@ -121,7 +121,7 @@ flowchart TD
     B -->|是| C[使用指定编码]
     B -->|否| D[读取文件前1024字节]
     D --> E[使用chardet探测编码]
-    E --> F{置信度>80%?}
+    E --> F{"置信度>80%?"}
     F -->|是| G[使用探测到的编码]
     F -->|否| H[使用UTF-8默认编码]
     C --> I[解码文件内容]
@@ -136,12 +136,12 @@ flowchart TD
 flowchart TD
     A[开始解析章节] --> B[编译正则表达式]
     B --> C[遍历文件行]
-    C --> D{行匹配章节正则?}
+    C --> D{"行匹配章节正则?"}
     D -->|是| E[记录章节起始位置]
     D -->|否| C
-    E --> F{还有更多行吗?}
+    E --> F{"还有更多行吗?"}
     F -->|是| C
-    F -->|否| G{找到章节?}
+    F -->|否| G{"找到章节?"}
     G -->|是| H[创建章节对象列表]
     G -->|否| I[将整个文件作为一个章节]
     H --> J[处理章节内容]
