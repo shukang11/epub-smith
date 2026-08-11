@@ -10,6 +10,14 @@
   - 补 `cover.xhtml` 封面页并置于 spine 首位，兼容 Kindle 等对纯 manifest 声明支持不稳的阅读器
   - `template export` 附带导出可编辑的 `cover.svg` 封面模板
   - 修复 OPF manifest 中 `nav.xhtml` 被重复声明（普通 item + properties="nav"）的问题
+- 增强 `template export` 的预览页 `preview.html`
+  - 示例章节扩至 6 个，覆盖小说/散文/科技/超长标题/对话/短段落等排版场景
+  - 新增目录 + ◀/▶ 翻页 + 键盘 ←→ 切换交互（单章显示）
+  - 顶部新增示例封面块，作为封面风格参考
+- 页面结构规范化与样式扩展
+  - 章节/目录页包 `.container` 内容容器（max-width 800 + 居中留白），使原死代码生效
+  - 封面页改 class 化：`.cover-page` / `.cover-image`（居中、自适应不拉伸、白底），替换内联样式
+  - 新增可自定义：`.container`、`.cover-page`、`.cover-image`
 - 命令行子命令优化：重构为清晰的子命令结构
   - `convert`：TXT转EPUB的主要命令
   - `preview-outline`：打印章节大纲

@@ -119,7 +119,7 @@ epub-smith template-export my_templates
 
 这将导出以下文件：
 - `style.css` - 样式文件，可编辑修改
-- `preview.html` - 预览文件，可在浏览器中打开
+- `preview.html` - 预览文件，可在浏览器中打开（含 6 个示例章节 + 目录/翻页交互 + 示例封面，编辑 style.css 后刷新即可见新效果）
 - `cover.svg` - 封面模板（`--cover auto` 使用），可编辑配色与装饰
 - `README.md` - 使用说明
 

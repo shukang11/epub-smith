@@ -38,6 +38,13 @@
   - 兼容 Kindle/部分阅读器：补 cover.xhtml 封面页并置于 spine 首位
   - `template export` 附带导出可编辑的 `cover.svg` 模板
   - 修复 OPF manifest 中 nav.xhtml 重复声明问题
+- 增强 `template export` 的预览页
+  - 示例章节扩至 6 个，覆盖多样排版场景
+  - 新增目录 + 翻页 + 键盘切换交互
+  - 顶部示例封面块
+- 页面结构规范化
+  - 章节/目录页包 `.container` 内容容器，消除死代码
+  - 封面页改 class 化（`.cover-page`/`.cover-image`），替换内联样式
 
 ## 当前重点
 

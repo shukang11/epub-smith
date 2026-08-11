@@ -96,7 +96,8 @@ booksmith/
 
 | 文件 | 作用 | 边界 |
 |------|------|------|
-| `templates/chapter.xhtml.tera` | 章节XHTML模板 | 仅定义模板结构，不包含业务逻辑 |
-| `templates/nav.xhtml.tera` | 导航XHTML模板 | 仅定义模板结构，不包含业务逻辑 |
+| `templates/chapter.xhtml.tera` | 章节XHTML模板（body 内 `.container` 包裹标题与段落） | 仅定义模板结构，不包含业务逻辑 |
+| `templates/nav.xhtml.tera` | 导航XHTML模板（`.container` 包裹 `#toc`） | 仅定义模板结构，不包含业务逻辑 |
+| `templates/cover.xhtml.tera` | 封面页XHTML模板（`.cover-page` 居中显示 `.cover-image`） | 仅定义模板结构，不包含业务逻辑 |
 | `templates/content.opf.tera` | EPUB内容元数据模板，定义EPUB的manifest、spine和metadata | 仅定义模板结构，不包含业务逻辑 |
-| `resources/css/default.css` | 默认CSS样式（方案 C：首行缩进 + 中等段距 + 段内换行保留） | 仅定义样式，不包含业务逻辑 |
+| `resources/css/default.css` | 默认CSS样式（方案 C：首行缩进 + 中等段距 + 段内换行保留；含 `.container` 内容容器与 `.cover-page`/`.cover-image` 封面页样式） | 仅定义样式，不包含业务逻辑 |
