@@ -14,7 +14,7 @@
   1. 首先阅读 `README.md` 了解项目概况
   2. 阅读 `docs/MAP.md` 获取文档地图，明确文档结构与查询路径
   3. 根据任务需要阅读 `docs/` 相关具体文档
-- 代码文件更新时，务必检查并更新 `docs/architecture/system-map.md`，确保该文档精确反映代码结构和每个文件的作用与边界
+- 代码文件更新时，务必检查并更新 `docs/system-map.md`，确保该文档精确反映代码结构和每个文件的作用与边界
 - 修改后优先运行与变更范围匹配的测试；推荐完整流程：
   - `cargo test`
   - `cargo clippy --all-targets --all-features -- -D warnings`
@@ -33,7 +33,7 @@
 - 积极阅读文档：在开始任何工作前，先了解相关文档内容，确保理解项目结构和设计意图
 - 积极更新文档：代码变更时同步更新相关文档，保持文档与代码的一致性
 - 所有新文档先登记到 `docs/MAP.md` 的索引
-- `docs/architecture/system-map.md` 必须精确反映每一个代码文件的结构、作用与边界，代码更新时务必同步更新此文档
+- `docs/system-map.md` 必须精确反映每一个代码文件的结构、作用与边界，代码更新时务必同步更新此文档
 - 涉及行为变化时，更新 `docs/llm_ctx/STATUS.md` 与 `docs/llm_ctx/CHANGELOG.md`
 - 文档目录结构仅在 `docs/STRUCTURE.md` 维护
 - 默认使用中文撰写；如需双语，先中文后英文

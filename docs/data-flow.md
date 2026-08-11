@@ -148,3 +148,19 @@ flowchart TD
     I --> J
     J --> K[返回章节列表]
 ```
+
+## 渲染流程
+
+1. **章节XHTML**：Tera 模板将章节渲染为 `chapter_NNN.xhtml`（`.container` 包裹标题与段落）
+2. **封面**：`--cover auto` 生成 PNG（SVG 模板 + resvg）或复制用户图片；生成 `cover.xhtml` 封面页（spine 首位）
+3. **导航**：`nav.xhtml`（EPUB3 目录）+ `toc.ncx`（EPUB2 兼容目录，章节链接补零）
+4. **样式**：`style.css`（默认或 `--style` 自定义）
+5. **元数据**：`content.opf`（manifest / spine / guide，注册封面与 NCX）
+6. **容器文件**：`mimetype`（`application/epub+zip`）+ `META-INF/container.xml`
+
+## 打包流程
+
+1. `mimetype` 为首个 ZIP 条目且 **Stored 无压缩**（EPUB 规范要求）
+2. 其余文件 Deflate 压缩
+3. 打包为 `.epub`
+4. `--check` 时调用 epubcheck 校验（需 Java）
