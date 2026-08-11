@@ -108,13 +108,13 @@ epub-smith convert my_book.txt --cover auto
 导出默认模板到指定目录，用于自定义样式。
 
 ```bash
-epub-smith template-export <DIRECTORY>
+epub-smith template export <DIRECTORY>
 ```
 
 **示例：**
 
 ```bash
-epub-smith template-export my_templates
+epub-smith template export my_templates
 ```
 
 这将导出以下文件：
@@ -128,7 +128,7 @@ epub-smith template-export my_templates
 将章节结构保存到 JSON 文件，可用于后续生成 EPUB 或手动调整。
 
 ```bash
-epub-smith snapshot-save <INPUT> [OPTIONS]
+epub-smith snapshot save <INPUT> [OPTIONS]
 ```
 
 **参数：**
@@ -148,10 +148,10 @@ epub-smith snapshot-save <INPUT> [OPTIONS]
 
 ```bash
 # 保存章节结构
-epub-smith snapshot-save my_book.txt -o structure.json
+epub-smith snapshot save my_book.txt -o structure.json
 
 # 使用自定义规则
-epub-smith snapshot-save my_book.txt -r rules.toml -o structure.json
+epub-smith snapshot save my_book.txt -r rules.toml -o structure.json
 ```
 
 ### snapshot load - 从快照生成
@@ -159,7 +159,7 @@ epub-smith snapshot-save my_book.txt -r rules.toml -o structure.json
 使用已保存的快照生成 EPUB，无需原始 TXT 文件。
 
 ```bash
-epub-smith snapshot-load <FILE> [OPTIONS]
+epub-smith snapshot load <FILE> [OPTIONS]
 ```
 
 **参数：**
@@ -185,13 +185,13 @@ epub-smith snapshot-load <FILE> [OPTIONS]
 
 ```bash
 # 从快照生成 EPUB
-epub-smith snapshot-load structure.json
+epub-smith snapshot load structure.json
 
 # 指定输出文件名
-epub-smith snapshot-load structure.json -o custom_book.epub
+epub-smith snapshot load structure.json -o custom_book.epub
 
 # 手动编辑 snapshot 后重新生成
-epub-smith snapshot-load structure.json -o revised.epub
+epub-smith snapshot load structure.json -o revised.epub
 ```
 
 ### preview outline - 预览章节大纲
@@ -199,7 +199,7 @@ epub-smith snapshot-load structure.json -o revised.epub
 打印检测到的章节结构概览，不生成 EPUB。
 
 ```bash
-epub-smith preview-outline <INPUT> [OPTIONS]
+epub-smith preview outline <INPUT> [OPTIONS]
 ```
 
 **参数：**
@@ -218,10 +218,10 @@ epub-smith preview-outline <INPUT> [OPTIONS]
 
 ```bash
 # 查看章节大纲
-epub-smith preview-outline my_book.txt
+epub-smith preview outline my_book.txt
 
 # 使用自定义规则
-epub-smith preview-outline my_book.txt -r rules.toml
+epub-smith preview outline my_book.txt -r rules.toml
 ```
 
 ### preview dry-run - 预览章节详情
@@ -229,7 +229,7 @@ epub-smith preview-outline my_book.txt -r rules.toml
 显示详细的章节结构检测结果，包括章节号、行号等信息。
 
 ```bash
-epub-smith preview-dry-run <INPUT> [OPTIONS]
+epub-smith preview dry-run <INPUT> [OPTIONS]
 ```
 
 **参数：**
@@ -248,13 +248,13 @@ epub-smith preview-dry-run <INPUT> [OPTIONS]
 
 ```bash
 # 预览章节详情
-epub-smith preview-dry-run my_book.txt
+epub-smith preview dry-run my_book.txt
 
 # 使用自定义规则
-epub-smith preview-dry-run my_book.txt -r rules.toml
+epub-smith preview dry-run my_book.txt -r rules.toml
 
 # 与全局选项结合
-epub-smith --lang zh-CN preview-dry-run my_book.txt
+epub-smith --lang zh-CN preview dry-run my_book.txt
 ```
 
 **输出示例：**
@@ -274,7 +274,7 @@ epub-smith --lang zh-CN preview-dry-run my_book.txt
 
 ```bash
 # 1. 先预览检查章节识别是否正确
-epub-smith --lang zh-CN preview-dry-run anthology.txt -r rules_anthology.toml
+epub-smith --lang zh-CN preview dry-run anthology.txt -r rules_anthology.toml
 
 # 2. 确认无误后生成 EPUB
 epub-smith --lang zh-CN convert anthology.txt -r rules_anthology.toml -o anthology.epub
@@ -284,13 +284,13 @@ epub-smith --lang zh-CN convert anthology.txt -r rules_anthology.toml -o antholo
 
 ```bash
 # 1. 保存当前解析结果
-epub-smith snapshot-save draft.txt -o draft_snapshot.json
+epub-smith snapshot save draft.txt -o draft_snapshot.json
 
 # 2. 手动编辑 snapshot（调整章节顺序、修改标题等）
 # 使用文本编辑器修改 draft_snapshot.json
 
 # 3. 从修改后的 snapshot 生成 EPUB
-epub-smith snapshot-load draft_snapshot.json -o revised_book.epub
+epub-smith snapshot load draft_snapshot.json -o revised_book.epub
 ```
 
 ### 自定义规则文件示例
@@ -329,6 +329,6 @@ trim_whitespace = true
 ## 注意事项
 
 1. **全局选项位置**：全局选项（`--verbose`, `--debug`, `--lang`）必须放在子命令之前
-2. **必需参数**：`snapshot-save` 需要使用 `-o` 指定输出文件
+2. **必需参数**：`snapshot save` 需要使用 `-o` 指定输出文件
 3. **规则文件**：复杂文本或特殊章节格式（如 `第1张`）建议使用自定义规则文件
 4. **编码问题**：如果文件编码不是 UTF-8，请使用 `--encoding` 选项指定

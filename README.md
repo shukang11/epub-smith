@@ -245,7 +245,7 @@ Currently supported languages:
 
 ### Dry Run
 
-The `preview-dry-run` subcommand allows you to preview how EpubSmith will parse your file without generating an EPUB:
+The `preview dry-run` subcommand allows you to preview how EpubSmith will parse your file without generating an EPUB:
 
 ```bash
 epub-smith preview dry-run input.txt

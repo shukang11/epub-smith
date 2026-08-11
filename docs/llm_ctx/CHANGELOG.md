@@ -20,11 +20,11 @@
   - 新增可自定义：`.container`、`.cover-page`、`.cover-image`
 - 命令行子命令优化：重构为清晰的子命令结构
   - `convert`：TXT转EPUB的主要命令
-  - `preview-outline`：打印章节大纲
-  - `preview-dry-run`：预览详细章节结构
-  - `snapshot-save`：保存章节结构快照
-  - `snapshot-load`：从快照生成EPUB
-  - `template-export`：导出样式模板
+  - `preview outline`：打印章节大纲
+  - `preview dry-run`：预览详细章节结构
+  - `snapshot save`：保存章节结构快照
+  - `snapshot load`：从快照生成EPUB
+  - `template export`：导出样式模板
 - 新增 `doctor` 诊断命令
   - 输出章节数据异常（重复章节号、倒序章节号）统计与样本
   - 输出规则风险提示（“张”单位误判风险、中文数字范围不足风险）
