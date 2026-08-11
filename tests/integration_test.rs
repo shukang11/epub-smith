@@ -668,4 +668,22 @@ fn test_template_export_includes_cover_svg() {
         content.contains("{{ title_lines }}") && content.contains("{{ author }}"),
         "cover.svg 应包含占位符"
     );
+
+    // 预览页应包含章节视图、目录、示例封面与翻页交互
+    let preview_path = export_dir.path().join("preview.html");
+    assert!(preview_path.exists(), "template export 应包含 preview.html");
+    let preview = std::fs::read_to_string(&preview_path).unwrap();
+    assert!(
+        preview.contains("class=\"chapter-view"),
+        "preview.html 应包含章节视图"
+    );
+    assert!(preview.contains("data-idx"), "preview.html 应包含目录链接");
+    assert!(
+        preview.contains("preview-cover"),
+        "preview.html 应包含示例封面"
+    );
+    assert!(
+        preview.contains("nextChapter") && preview.contains("prevChapter"),
+        "preview.html 应包含翻页交互"
+    );
 }
