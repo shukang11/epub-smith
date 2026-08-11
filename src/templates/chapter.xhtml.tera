@@ -7,10 +7,12 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-    <h1 class="chapter-title">{{ chapter.title }}</h1>
-    
-    {% for paragraph in chapter.paragraphs %}
-    <p class="chapter-content">{{ paragraph }}</p>
-    {% endfor %}
+    <div class="container">
+        <h1 class="chapter-title">{{ chapter.title }}</h1>
+
+        {% for paragraph in chapter.paragraphs %}
+        <p class="chapter-content">{{ paragraph }}</p>
+        {% endfor %}
+    </div>
 </body>
 </html>

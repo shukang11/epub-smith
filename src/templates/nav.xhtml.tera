@@ -7,15 +7,17 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-    <nav epub:type="toc" id="toc">
-        <h1>Table of Contents</h1>
-        <ol>
-            {% for chapter in book.chapters %}
-            <li>
-                <a href="chapter_{{ loop.index }}.xhtml">{{ chapter.title }}</a>
-            </li>
-            {% endfor %}
-        </ol>
-    </nav>
+    <div class="container">
+        <nav epub:type="toc" id="toc">
+            <h1>Table of Contents</h1>
+            <ol>
+                {% for chapter in book.chapters %}
+                <li>
+                    <a href="chapter_{{ loop.index }}.xhtml">{{ chapter.title }}</a>
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+    </div>
 </body>
 </html>

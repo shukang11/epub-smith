@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <title>Cover</title>
 </head>
-<body style="margin: 0; text-align: center;">
-    <img src="{{ cover_file }}" alt="Cover" />
+<body class="cover-page">
+    <img class="cover-image" src="{{ cover_file }}" alt="Cover" />
 </body>
 </html>

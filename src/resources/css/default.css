@@ -67,6 +67,37 @@ body {
     padding: 20px;
 }
 
+/* ========== 封面页样式 ========== */
+/* 
+ * .cover-page 控制封面页（cover.xhtml）的整体显示
+ * 
+ * text-align: center 使封面图水平居中
+ * 
+ * background-color: 页面背景（默认白）
+ */
+.cover-page {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    background-color: #ffffff;
+}
+
+/* 
+ * .cover-image 控制封面图的显示
+ * 
+ * max-width: 100% 防止图在窄屏溢出
+ * 
+ * height: auto 保持纵横比，避免拉伸变形
+ * 
+ * display: block + margin: 0 auto 使图居中
+ */
+.cover-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
 /* ========== 章节标题样式 ========== */
 /* 
  * h1.chapter-title 控制章节标题的显示
