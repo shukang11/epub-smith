@@ -11,9 +11,9 @@
         <nav epub:type="toc" id="toc">
             <h1>Table of Contents</h1>
             <ol>
-                {% for chapter in book.chapters %}
+                {% for item in chapters %}
                 <li>
-                    <a href="chapter_{{ loop.index }}.xhtml">{{ chapter.title }}</a>
+                    <a href="{{ item.1 }}">{{ item.0 }}</a>
                 </li>
                 {% endfor %}
             </ol>

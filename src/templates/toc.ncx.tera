@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- EPUB2 兼容的导航控制文件（NCX），现代阅读器忽略此文件使用 nav.xhtml -->
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head>
+    <meta name="dtb:uid" content="{{ book.meta.identifier }}"/>
+    <meta name="dtb:depth" content="1"/>
+    <meta name="dtb:totalPageCount" content="0"/>
+    <meta name="dtb:maxPageNumber" content="0"/>
+  </head>
+  <docTitle>
+    <text>{{ book.meta.title }}</text>
+  </docTitle>
+  <navMap>
+    {% for item in chapters %}
+    <navPoint id="chapter-{{ loop.index }}" playOrder="{{ loop.index }}">
+      <navLabel>
+        <text>{{ item.0 }}</text>
+      </navLabel>
+      <content src="{{ item.1 }}"/>
+    </navPoint>
+    {% endfor %}
+  </navMap>
+</ncx>

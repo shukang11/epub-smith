@@ -524,6 +524,82 @@ fn test_snapshot_with_input_files_error() {
 // }
 
 #[test]
+fn test_ncx_navigation_and_nav_links() {
+    // 创建测试内容
+    let content = r#"第1章
+这是第一章
+
+第2章
+这是第二章"#;
+    let temp_file = tempfile::NamedTempFile::new().unwrap();
+    std::fs::write(temp_file.path(), content).unwrap();
+
+    let output_path = temp_file.path().with_extension("ncx_epub");
+    let output_str = output_path.to_str().unwrap();
+
+    let mut cmd = assert_cmd::Command::cargo_bin("epub-smith").unwrap();
+    cmd.arg("convert")
+        .arg(temp_file.path())
+        .arg("-o")
+        .arg(output_str);
+    cmd.assert().success();
+
+    let file = std::fs::File::open(output_str).unwrap();
+    let mut archive = zip::ZipArchive::new(file).unwrap();
+    let names: Vec<String> = archive.file_names().map(|s| s.to_string()).collect();
+    assert!(
+        names.contains(&"toc.ncx".to_string()),
+        "EPUB 应包含 toc.ncx，实际: {names:?}"
+    );
+
+    // OPF 注册 NCX 且 spine 引用它
+    {
+        let mut opf = archive.by_name("content.opf").unwrap();
+        let mut opf_content = String::new();
+        std::io::Read::read_to_string(&mut opf, &mut opf_content).unwrap();
+        assert!(opf_content.contains("toc.ncx"), "OPF 应注册 toc.ncx");
+        assert!(
+            opf_content.contains("application/x-dtbncx+xml"),
+            "NCX media-type 应正确"
+        );
+        assert!(
+            opf_content.contains("spine toc=\"ncx\""),
+            "spine 应引用 NCX"
+        );
+    }
+
+    // nav 链接补零且指向真实文件（chapter_001.xhtml 而非 chapter_1.xhtml）
+    {
+        let mut nav = archive.by_name("nav.xhtml").unwrap();
+        let mut nav_content = String::new();
+        std::io::Read::read_to_string(&mut nav, &mut nav_content).unwrap();
+        assert!(
+            nav_content.contains("chapter_001.xhtml"),
+            "nav 链接应补零，实际: {nav_content}"
+        );
+        assert!(
+            !nav_content.contains("chapter_1.xhtml"),
+            "nav 链接不应无补零"
+        );
+    }
+
+    // NCX 内容：uid 与 navPoint 结构
+    {
+        let mut ncx = archive.by_name("toc.ncx").unwrap();
+        let mut ncx_content = String::new();
+        std::io::Read::read_to_string(&mut ncx, &mut ncx_content).unwrap();
+        assert!(ncx_content.contains("navPoint"), "NCX 应包含 navPoint");
+        assert!(ncx_content.contains("dtb:uid"), "NCX 应包含 dtb:uid");
+        assert!(
+            ncx_content.contains("chapter_001.xhtml"),
+            "NCX content src 应补零"
+        );
+    }
+
+    std::fs::remove_file(output_str).ok();
+}
+
+#[test]
 fn test_auto_cover_generates_cover_png() {
     // 创建测试内容
     let content = r#"第1章
@@ -594,7 +670,7 @@ fn test_auto_cover_generates_cover_png() {
     );
 
     // spine 首项引用封面页（manifest 第一项 = cover.xhtml = item-1）
-    let spine_start = opf_content.find("<spine>").unwrap();
+    let spine_start = opf_content.find("<spine").unwrap();
     let spine_end = opf_content.find("</spine>").unwrap();
     let spine = &opf_content[spine_start..spine_end];
     assert!(

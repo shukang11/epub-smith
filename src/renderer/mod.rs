@@ -75,6 +75,11 @@ pub fn render_book(book: &Book, config: &Config) -> Result<Vec<PathBuf>> {
     render_nav(book, &tera, &nav_path)?;
     xhtml_files.push(nav_path);
 
+    // 渲染NCX导航控制文件（EPUB2兼容目录，现代阅读器忽略）
+    let ncx_path = temp_path.join("toc.ncx");
+    render_ncx(book, &tera, &ncx_path)?;
+    xhtml_files.push(ncx_path);
+
     // 渲染CSS文件
     let css_path = temp_path.join("style.css");
     let _css_content = render_css(&css_path, &config.style)?;
@@ -116,6 +121,9 @@ pub fn initialize_tera() -> Result<Tera> {
     // 添加封面页模板
     tera.add_raw_template("cover.xhtml", include_str!("../templates/cover.xhtml.tera"))?;
 
+    // 添加NCX导航模板（EPUB2兼容）
+    tera.add_raw_template("toc.ncx", include_str!("../templates/toc.ncx.tera"))?;
+
     // 添加OPF模板
     tera.add_raw_template("content.opf", include_str!("../templates/content.opf.tera"))?;
 
@@ -145,11 +153,33 @@ pub fn render_chapter(
 pub fn render_nav(book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()> {
     let mut context = TeraContext::new();
     context.insert("book", book);
+    context.insert("chapters", &chapter_entries(book));
 
     let rendered = tera.render("nav.xhtml", &context)?;
     std::fs::write(output_path, rendered)?;
 
     Ok(())
+}
+
+/// 渲染NCX导航控制文件（EPUB2 兼容目录）
+pub fn render_ncx(book: &Book, tera: &Tera, output_path: &PathBuf) -> Result<()> {
+    let mut context = TeraContext::new();
+    context.insert("book", book);
+    context.insert("chapters", &chapter_entries(book));
+
+    let rendered = tera.render("toc.ncx", &context)?;
+    std::fs::write(output_path, rendered)?;
+
+    Ok(())
+}
+
+/// 构造章节目录项（标题 + 补零文件名，与 render_book 的文件命名保持一致）
+fn chapter_entries(book: &Book) -> Vec<(String, String)> {
+    book.chapters
+        .iter()
+        .enumerate()
+        .map(|(i, chapter)| (chapter.title.clone(), format!("chapter_{:03}.xhtml", i + 1)))
+        .collect()
 }
 
 /// 渲染OPF文件

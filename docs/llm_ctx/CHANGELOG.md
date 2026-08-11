@@ -18,6 +18,10 @@
   - 章节/目录页包 `.container` 内容容器（max-width 800 + 居中留白），使原死代码生效
   - 封面页改 class 化：`.cover-page` / `.cover-image`（居中、自适应不拉伸、白底），替换内联样式
   - 新增可自定义：`.container`、`.cover-page`、`.cover-image`
+- 新增 NCX 导航控制文件（EPUB2 兼容目录）
+  - 生成 `toc.ncx`（navMap 一层结构），manifest 注册 `application/x-dtbncx+xml`，spine 加 `toc="ncx"` 属性
+  - 现代阅读器忽略 NCX 使用 nav.xhtml，无行为影响
+  - 修复 nav.xhtml 目录链接失效 bug（`chapter_N.xhtml` 无补零 → 补零为 `chapter_NNN.xhtml` 与文件名一致）
 - 命令行子命令优化：重构为清晰的子命令结构
   - `convert`：TXT转EPUB的主要命令
   - `preview outline`：打印章节大纲
